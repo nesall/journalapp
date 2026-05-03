@@ -1,0 +1,154 @@
+<script lang="ts">
+	import type { PageData, ActionData } from './$types';
+	import { enhance } from '$app/forms';
+
+	let { data, form }: { data: PageData; form: ActionData } = $props();
+
+	let showComposer = $state(false);
+	let body = $state('');
+	let mood = $state<number | null>(null);
+	let entryDate = $state(new Date().toISOString().split('T')[0]);
+
+	const moods = ['😞', '😕', '😐', '🙂', '😄'];
+
+	function groupByDate(entries: typeof data.entries) {
+		type Entry = typeof entries extends readonly (infer T)[] ? T : { entry_date: string | Date };
+		const groups: Record<string, Entry[]> = {};
+		for (const entry of entries as Entry[]) {
+			const date = entry.entry_date.toString().split('T')[0];
+			groups[date] = groups[date] ?? [];
+			groups[date].push(entry);
+		}
+		return Object.entries(groups).sort((a, b) => b[0].localeCompare(a[0]));
+	}
+
+	function formatDate(dateStr: string) {
+		return new Date(dateStr).toLocaleDateString('en-US', {
+			weekday: 'long',
+			year: 'numeric',
+			month: 'long',
+			day: 'numeric'
+		});
+	}
+
+	$effect(() => {
+		if (form?.success) {
+			body = '';
+			mood = null;
+			showComposer = false;
+		}
+	});
+</script>
+
+<!-- Header -->
+<div class="flex items-center gap-3 border-b border-surface-300 px-4 py-3">
+	<a href="/journal" class="preset-soft btn btn-sm">← Back</a>
+	<span class="text-2xl">{data.topic.icon ?? '📓'}</span>
+	<h2 class="flex-1 h3 font-bold">{data.topic.name}</h2>
+	<button class="preset-filled-primary-500 btn btn-sm" onclick={() => (showComposer = !showComposer)}>
+		{showComposer ? 'Cancel' : '+ New Entry'}
+	</button>
+</div>
+
+<!-- Composer -->
+{#if showComposer}
+	<div class="border-b border-surface-300 bg-surface-50 p-4">
+		{#if form?.error}
+			<aside class="alert preset-filled-error-500 mb-3">
+				<p>{form.error}</p>
+			</aside>
+		{/if}
+
+		<form method="POST" action="?/create" use:enhance class="space-y-3">
+			<textarea
+				class="textarea w-full"
+				name="body"
+				rows="4"
+				placeholder="What's on your mind..."
+				bind:value={body}
+				required
+			></textarea>
+
+			<div class="flex flex-wrap items-center gap-4">
+				<!-- Mood -->
+				<div class="flex items-center gap-1">
+					<span class="text-sm text-surface-500">Mood:</span>
+					{#each moods as emoji, i}
+						<button
+							type="button"
+							class="rounded p-1 text-xl transition-all {mood === i + 1
+								? 'scale-125'
+								: 'opacity-50 hover:opacity-100'}"
+							onclick={() => (mood = mood === i + 1 ? null : i + 1)}>{emoji}</button
+						>
+					{/each}
+					<input type="hidden" name="mood" value={mood ?? ''} />
+				</div>
+
+				<!-- Date -->
+				<label class="flex items-center gap-2 text-sm">
+					<span class="text-surface-500">Date:</span>
+					<input class="input-sm input" type="date" name="entry_date" bind:value={entryDate} />
+				</label>
+			</div>
+
+			<div class="flex justify-end">
+				<button type="submit" class="preset-filled-primary-500 btn btn-sm" disabled={!body.trim()}>
+					Save Entry
+				</button>
+			</div>
+		</form>
+	</div>
+{/if}
+
+<!-- Feed -->
+<div class="flex-1 overflow-y-auto p-4">
+	{#if data.entries.length === 0}
+		<div class="flex flex-col items-center justify-center gap-3 py-20 text-center">
+			<span class="text-6xl">{data.topic.icon ?? '📓'}</span>
+			<p class="text-surface-500">No entries yet. Write your first one.</p>
+		</div>
+	{:else}
+		{#each groupByDate(data.entries) as [date, entries]}
+			<div class="mb-6">
+				<!-- Date header -->
+				<div class="mb-3 flex items-center gap-3">
+					<span class="text-sm font-medium text-surface-500">{formatDate(date)}</span>
+					<div class="h-px flex-1 bg-surface-300"></div>
+				</div>
+
+				<!-- Entries for this date -->
+				<div class="space-y-3">
+					{#each entries as entry}
+						<div class="card bg-surface-100 group p-4">
+							<div class="flex items-start justify-between gap-2">
+								<p class="flex-1 text-sm leading-relaxed whitespace-pre-wrap">{entry.body}</p>
+								<div class="flex items-center gap-2">
+									{#if entry.mood}
+										<span class="text-xl">{moods[entry.mood - 1]}</span>
+									{/if}
+									<form method="POST" action="?/delete" use:enhance>
+										<input type="hidden" name="entry_id" value={entry.id} />
+										<button
+											type="submit"
+											class="preset-tonal-error btn btn-sm opacity-0 transition-opacity group-hover:opacity-100"
+											onclick={(e) => {
+												if (!confirm('Delete this entry?')) e.preventDefault();
+											}}>✕</button
+										>
+									</form>
+								</div>
+							</div>
+							<p class="mt-2 text-xs text-surface-400">
+								{new Date(entry.created_at).toLocaleTimeString('en-US', {
+									hour: '2-digit',
+									minute: '2-digit'
+								})}
+							</p>
+						</div>
+					{/each}
+				</div>
+			</div>
+		{/each}
+	{/if}
+</div>
