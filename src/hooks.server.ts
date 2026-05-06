@@ -5,7 +5,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 	const sessionId = event.cookies.get('session_id');
 
 	if (sessionId) {
-		const rows = await sql`
+		const rows = await sql<{ id: string; email: string; display_name: string | null }[]>`
 			SELECT u.id, u.email, u.display_name
 			FROM sessions s
 			JOIN users u ON u.id = s.user_id

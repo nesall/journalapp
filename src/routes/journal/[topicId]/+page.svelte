@@ -2,7 +2,6 @@
 	import { onMount } from 'svelte';
 	// import { testData } from '$lib/testdata';
 	import NoteBox from './NoteBox.svelte';
-	import type { Note } from '$lib/types';
 	import { invalidateAll } from '$app/navigation';
 	import type { PageProps } from './$types';
 	import { enhance } from '$app/forms';
@@ -11,9 +10,7 @@
 
 	let newEntryId = $state<string | null>(null);
 
-	onMount(async () => {
-		console.log('Dashboard Page Mounted');
-	});
+	onMount(async () => {});
 
 	// when server returns newEntryId, store it so NoteBox can auto-open in editMode
 	$effect(() => {
@@ -21,36 +18,17 @@
 			newEntryId = form.newEntryId;
 		}
 	});
-
-	// const notes = $derived(testData.notes);
-
-	async function handleSave(updated: Partial<Note>) {
-		const res = await fetch(`/journal/${data.topic.id}/entries`, {
-			method: 'PATCH',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify(updated)
-		});
-		if (res.ok) invalidateAll(); // re-runs load(), refreshes entries
-	}
-
-	async function handleDelete(id: string) {
-		const res = await fetch(`/journal/${data.topic.id}/entries`, {
-			method: 'DELETE',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ id })
-		});
-		if (res.ok) invalidateAll();
-	}
-
-	async function onAddNew() {
-		// TODO:
-	}
 </script>
 
 <div
-	class="bg-surface-200-700-token container mx-auto flex flex-col space-y-6 card p-6 shadow lg:max-w-2xl"
+	class="bg-surface-200-700-token container mx-auto flex flex-col space-y-6 overflow-y-auto card p-6 shadow lg:max-w-2xl"
 >
-	<div class="mb-4 flex items-center justify-between">
+	<div class="mb-4 flex items-center justify-between gap-2">
+		<a href="/journal" class="btn preset-tonal-primary">&larr;</a>
+		<h2 class="flex items-center gap-2 pl-1 h2 font-bold">
+			<span>{data.topic.name}</span>
+			<span>{data.topic.icon}</span>
+		</h2>
 		<form
 			method="POST"
 			action="?/create"
@@ -61,19 +39,32 @@
 				};
 			}}
 		>
-			<button type="submit" class="btn preset-filled-primary-500 btn-sm"> + Add Note </button>
+			<button type="submit" class="btn preset-filled-primary-500">&#x2B;</button>
 		</form>
 	</div>
+
+	{#if data.q}
+		<div class="flex items-center gap-2 bg-surface-200 px-4 py-2 text-sm">
+			<span>Results for <strong>"{data.q}"</strong> — {data.entries.length} found</span>
+		</div>
+	{/if}
+
 	<div class="flex flex-col space-y-4">
 		{#each data.entries as note}
 			<NoteBox
 				{note}
-				onSave={handleSave}
-				onDelete={handleDelete}
+				topicId={data.topic.id}
+				onMutate={invalidateAll}
 				autoEdit={note.id === newEntryId}
 			/>
 		{/each}
 	</div>
+
+	{#if data.entries.length === 0}
+		<div class="text-center text-surface-500">
+			<p>No entries yet.</p>
+		</div>
+	{/if}
 </div>
 
 <style>

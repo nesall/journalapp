@@ -1,38 +1,46 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import type { Note } from '$lib/types';
-	import { formatDate, formatTime, moods } from '$lib/utils';
+	import { formatDate, formatDateYYYYMMDD, formatTime, moods } from '$lib/utils';
 	import { slide } from 'svelte/transition';
+	import Lightbox from '$lib/widgets/Lightbox.svelte';
 
 	interface Props {
 		note: Note;
+		topicId: string;
 		autoEdit?: boolean;
-		onSave?: (updated: Partial<Note>) => Promise<void>;
-		onDelete?: (id: string) => Promise<void>;
+		onMutate?: () => void;
 	}
 
-	let { note, autoEdit = false, onSave, onDelete }: Props = $props();
+	let { note, topicId, autoEdit = false, onMutate }: Props = $props();
 
 	let interactiveMode = $state(false);
 	let editMode = $state(false);
-
+	let saving = $state(false);
+	let deleting = $state(false);
 	let editMood = $state(0);
+	let editDate = $state('');
+	let lightboxIndex = $state<number | null>(null);
 
 	onMount(() => {
 		editMood = note.mood || 0;
+		editDate = formatDateYYYYMMDD(note.entry_date);
+		console.log('NoteBox Mounted', { note }, { editMood, editDate });
 	});
 
 	function enterEdit() {
 		editMood = note.mood || 0;
+		editDate = formatDateYYYYMMDD(note.entry_date);
 		interactiveMode = true;
 		editMode = true;
 	}
 
 	async function cancelEdit() {
-		if (autoEdit && !bodyEl?.innerText.trim()) {
-			await onDelete?.(note.id);
-			return;
-		}
+		// reset DOM content back to saved values
+		if (bodyEl) bodyEl.innerText = note.body;
+		if (titleEl) titleEl.innerText = note.title ?? '';
+		editMood = note.mood ?? 0;
+		editDate = formatDateYYYYMMDD(note.entry_date);
 		editMode = false;
 		interactiveMode = false;
 	}
@@ -41,16 +49,54 @@
 		const updatedTitle = titleEl?.innerText.trim() ?? '';
 		const updatedBody = bodyEl?.innerText.trim() ?? '';
 		if (!updatedBody) {
-			await onDelete?.(note.id);
+			alert('Body cannot be empty');
 			return;
 		}
-		await onSave?.({ id: note.id, title: updatedTitle, body: updatedBody, mood: editMood });
-		cancelEdit();
+		if (!updatedBody && !updatedTitle) {
+			await deleteNote();
+			return;
+		}
+		saving = true;
+		try {
+			const res = await fetch(`/journal/${topicId}/entries`, {
+				method: 'PATCH',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					id: note.id,
+					title: updatedTitle || null,
+					body: updatedBody,
+					mood: editMood || null,
+					entry_date: editDate
+				})
+			});
+			if (!res.ok) throw new Error(await res.text());
+			onMutate?.();
+			editMode = false;
+			interactiveMode = false;
+		} catch (err) {
+			console.error('Save failed', err);
+		} finally {
+			saving = false;
+		}
 	}
 
 	async function deleteNote() {
-		if (confirm('Are you sure you want to delete this note?')) {
-			await onDelete?.(note.id);
+		if (!autoEdit && !confirm('Delete this note?')) return;
+
+		deleting = true;
+		try {
+			const res = await fetch(`/journal/${topicId}/entries`, {
+				method: 'DELETE',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ id: note.id })
+			});
+
+			if (!res.ok) throw new Error(await res.text());
+			onMutate?.();
+		} catch (err) {
+			console.error('Delete failed', err);
+		} finally {
+			deleting = false;
 		}
 	}
 
@@ -66,47 +112,35 @@
 					: 'layout-4plus'
 	);
 
-	let uploading = $state(false);
+	async function removeImage(mediaId: string) {
+		if (!confirm('Remove this image?')) return;
+
+		const res = await fetch(`/journal/${topicId}/media`, {
+			method: 'DELETE',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ mediaId })
+		});
+
+		if (res.ok) onMutate?.();
+	}
 
 	async function handleImageUpload(e: Event) {
 		const input = e.target as HTMLInputElement;
 		const file = input.files?.[0];
 		if (!file) return;
 
-		uploading = true;
-		try {
-			const formData = new FormData();
-			formData.append('file', file);
-			formData.append('entry_id', note.id);
+		const formData = new FormData();
+		formData.append('file', file);
+		formData.append('entry_id', note.id);
 
-			const res = await fetch(`/journal/${note.topic_id}/media`, {
-				method: 'POST',
-				body: formData
-			});
-
-			if (!res.ok) throw new Error(await res.text());
-
-			const newMedia = await res.json();
-			// notify parent to refresh or optimistically update
-			await onSave?.({ id: note.id }); // triggers parent reload
-		} catch (err) {
-			console.error('Upload failed', err);
-		} finally {
-			uploading = false;
-			input.value = '';
-		}
-	}
-
-	async function removeImage(mediaId: string) {
-		if (!confirm('Remove this image?')) return;
-
-		const res = await fetch(`/journal/${note.topic_id}/media`, {
-			method: 'DELETE',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ mediaId })
+		const res = await fetch(`/journal/${topicId}/media`, {
+			method: 'POST',
+			body: formData
 		});
 
-		if (res.ok) await onSave?.({ id: note.id }); // triggers parent reload
+		if (res.ok) onMutate?.();
+		else console.error('Upload failed', await res.text());
+		input.value = '';
 	}
 
 	let bodyEl = $state<HTMLDivElement | null>(null);
@@ -122,20 +156,15 @@
 </script>
 
 <div
-	class="flex h-full flex-col space-y-2 card px-4 py-2 shadow"
+	class="flex h-full flex-col space-y-2 card border-surface-300 px-4 py-2
+     shadow-lg outline-none focus:border-primary-500"
 	onblur={(e) => {
 		if (!e.currentTarget.contains(e.relatedTarget as Node)) interactiveMode = false;
 	}}
 	tabindex="-1"
 >
 	<div class="flex items-center text-sm font-bold capitalize">
-		<div
-			bind:this={titleEl}
-			contenteditable={editMode}
-			class="flex-1 outline-none {editMode && !(note.title || '').trim()
-				? ''
-				: 'text-surface-400'}"
-		>
+		<div bind:this={titleEl} contenteditable={editMode} class="flex-1 outline-none">
 			{note.title}
 		</div>
 		{#if editMode}
@@ -183,10 +212,23 @@
 		<div class="gallery {gridClass}">
 			{#each images as media, j}
 				{#if j < 10}
-					<img src={media.url} alt="Note media" style="max-height2:64px" />
+					<button type="button" onclick={() => (lightboxIndex = j)}>
+						<img src={media.url} alt="Note media" class="cursor-pointer" />
+					</button>
 				{/if}
 			{/each}
 		</div>
+	{/if}
+
+	<!-- Lightbox -->
+	{#if lightboxIndex !== null}
+		<Lightbox
+			{images}
+			startIndex={lightboxIndex}
+			onClose={() => (lightboxIndex = null)}
+			title={note.title || 'Untitled'}
+			date={note.entry_date}
+		/>
 	{/if}
 
 	<div
@@ -201,11 +243,15 @@
 	<hr class="hr" />
 	{#if editMode}
 		<div class="flex items-center gap-2" transition:slide>
-			<button class="btn flex-1 preset-filled-primary-500 btn-sm" onclick={saveEdit}>
-				&#10003; Save
+			<button
+				class="btn flex-1 preset-filled-primary-500 btn-sm"
+				onclick={saveEdit}
+				disabled={saving}
+			>
+				{saving ? '...' : '✓ Save'}
 			</button>
 			<button class="ml-auto btn flex-1 preset-outlined-secondary-500 btn-sm" onclick={cancelEdit}>
-				&#10005; Cancel
+				✕ Cancel
 			</button>
 		</div>
 	{:else if interactiveMode}
@@ -214,16 +260,21 @@
 				type="button"
 				class="btn flex-1 preset-outlined-secondary-500 btn-sm"
 				onclick={enterEdit}
+				disabled={deleting}
 			>
 				✏️ Edit
 			</button>
 			<button class="ml-auto btn flex-1 preset-filled-error-500 btn-sm" onclick={deleteNote}>
-				🗑️ Delete
+				{deleting ? '...' : '🗑️ Delete'}
 			</button>
 		</div>
 	{/if}
 	<div class="flex w-full flex-row items-center text-xs">
-		<span>{formatDate(note.created_at)} {formatTime(note.created_at)}</span>
+		{#if editMode}
+			<input type="date" class="input-sm input text-xs" bind:value={editDate} />
+		{:else}
+			<span>{formatDate(note.entry_date)}</span>
+		{/if}
 		{#if !editMode}
 			{#if interactiveMode}
 				<button
@@ -249,46 +300,55 @@
 	.truncate-text {
 		display: -webkit-box;
 		-webkit-box-orient: vertical;
-		-webkit-line-clamp: 4; /* Limit to 4 lines */
-		line-clamp: 4; /* Standard property for compatibility */
+		-webkit-line-clamp: 4;
+		line-clamp: 4;
 		overflow: hidden;
 		text-overflow: ellipsis;
 	}
+
 	.gallery {
 		display: grid;
 		gap: 4px;
 		overflow: hidden;
+		min-height: 0;
+		height: 200px;
 	}
-
-	/* Single Image (Full Width) */
+	.gallery > * {
+		min-height: 0;
+		min-width: 0;
+	}
 	.layout-1 {
 		grid-template-columns: 1fr;
 		grid-template-rows: 1fr;
 	}
-
-	/* Two Images (Side by Side) */
 	.layout-2 {
 		grid-template-columns: 1fr 1fr;
+		grid-template-rows: 1fr;
+		align-items: stretch;
 	}
-
-	/* Three Images (One Large, Two Small) */
 	.layout-3 {
 		grid-template-columns: 2fr 1fr;
-		grid-template-rows: 1fr 1fr;
+		grid-template-rows: repeat(2, minmax(0, 1fr));
+		height: 200px;
+		align-items: stretch;
 	}
-	.layout-3 img:first-child {
-		grid-row: span 2; /* Large first image */
+	.layout-3 > * {
+		min-height: 0;
 	}
-
-	/* Four or More Images (Masonry-like Layout) */
+	.layout-3 button:first-child {
+		grid-row: span 2;
+	}
 	.layout-4plus {
 		grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+		grid-auto-rows: 1fr;
+		grid-auto-flow: dense;
+		align-items: stretch;
 	}
-
 	.gallery img {
 		width: 100%;
 		height: 100%;
 		object-fit: cover;
 		border-radius: 8px;
+		display: block;
 	}
 </style>

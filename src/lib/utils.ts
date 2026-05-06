@@ -30,15 +30,21 @@ const initResizeObserver = (ref: HTMLElement, handler: any) => {
 }
 
 function formatDate(dateStr: string): string {
-	return new Date(dateStr).toLocaleDateString('en-US', {
-		month: 'short', day: 'numeric', year: 'numeric'
-	});
+  const [year, month, day] = dateStr.split('T')[0].split('-');
+  return new Date(parseInt(year), parseInt(month) - 1, parseInt(day))
+    .toLocaleDateString('en-US', {
+      weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'
+    });
 }
 
 function formatTime(dateStr: string): string {
-	return new Date(dateStr).toLocaleTimeString('en-US', {
-		hour: '2-digit', minute: '2-digit'
-	});
+  return new Date(dateStr).toLocaleTimeString('en-US', {
+    hour: '2-digit', minute: '2-digit'
+  });
+}
+
+function formatDateYYYYMMDD(dateStr: string): string {
+  return dateStr.split('T')[0];
 }
 
 
@@ -48,5 +54,6 @@ export {
   initResizeObserver,
   moods,
   formatDate,
-  formatTime
+  formatTime,
+  formatDateYYYYMMDD
 }
