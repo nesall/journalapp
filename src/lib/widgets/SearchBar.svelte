@@ -11,6 +11,10 @@
 
 	let q = $state(page.url.searchParams.get('q') ?? '');
 
+	// $effect(() => {
+	// 	q = page.url.searchParams.get('q') ?? '';
+	// });
+
 	let debounceTimer: ReturnType<typeof setTimeout>;
 
 	function onInput() {
@@ -47,4 +51,3 @@
 		>
 	{/if}
 </div>
-

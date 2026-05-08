@@ -1,3 +1,10 @@
+export interface TopicTag {
+  id: string;
+  topic_id: string;
+  name: string;
+  color: string;
+  created_at: string;
+}
 
 export interface NoteMedia {
   id: string;
@@ -16,6 +23,8 @@ export interface Note {
   created_at: string;
   updated_at: string;
   media: NoteMedia[];
+  tag_id: string | null;
+  tag?: TopicTag | null;
 }
 
 export interface Topic {
@@ -24,5 +33,5 @@ export interface Topic {
   name: string;
   icon: string | null;
   color: string | null;
-  created_at: string;
+  created_at: string;  
 }

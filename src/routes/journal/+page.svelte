@@ -2,6 +2,7 @@
 	import type { PageData } from './$types';
 	import { enhance } from '$app/forms';
 	import type { Topic } from '$lib/types';
+	import { searchState } from '$lib/sharedState.svelte';
 
 	let { data }: { data: PageData } = $props();
 
@@ -40,6 +41,11 @@
 		editingTopicId = null;
 		activeTopicId = null;
 	}
+	$effect(() => {
+		if (!data.q) {
+			searchState.nofHits = null;
+		}
+	});
 </script>
 
 {#if data.topics.length === 0}
@@ -57,7 +63,7 @@
 	<div class="grid grid-cols-2 gap-4 p-4 sm:grid-cols-3 md:grid-cols-4">
 		{#each data.topics as topic}
 			<div
-				class="relative flex flex-col gap-2 card p-4 transition-colors shadow
+				class="relative flex flex-col gap-2 card p-4 shadow transition-colors
 				{activeTopicId === topic.id ? 'bg-surface-200-800' : 'bg-surface-100-900 hover:bg-surface-200-800'}"
 			>
 				{#if editingTopicId === topic.id}
@@ -102,7 +108,10 @@
 					</form>
 				{:else}
 					<!-- Display mode -->
-					<a href="/journal/{topic.id}" class="flex flex-col items-center gap-2 py-2">
+					<a
+						href="/journal/{topic.id}{data.q ? '?q=' + encodeURIComponent(data.q) : ''}"
+						class="flex flex-col items-center gap-2 py-2"
+					>
 						<span class="text-4xl">{topic.icon ?? '📓'}</span>
 						<span class="text-center font-medium">{topic.name}</span>
 					</a>

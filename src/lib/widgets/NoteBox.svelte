@@ -1,18 +1,20 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import type { Note } from '$lib/types';
-	import { formatDate, formatDateYYYYMMDD, formatTime, moods } from '$lib/utils';
+	import type { Note, TopicTag } from '$lib/types';
+	import { formatDate, formatDateYYYYMMDD, moods } from '$lib/utils';
 	import { slide } from 'svelte/transition';
 	import Lightbox from '$lib/widgets/Lightbox.svelte';
+	import TagPicker from '$lib/widgets/TagPicker.svelte';
 
 	interface Props {
 		note: Note;
 		topicId: string;
+		tags?: TopicTag[];
 		autoEdit?: boolean;
 		onMutate?: () => void;
 	}
 
-	let { note, topicId, autoEdit = false, onMutate }: Props = $props();
+	let { note, topicId, tags = [], autoEdit = false, onMutate }: Props = $props();
 
 	let interactiveMode = $state(false);
 	let editMode = $state(false);
@@ -20,17 +22,26 @@
 	let deleting = $state(false);
 	let editMood = $state(0);
 	let editDate = $state('');
+	let editTagId = $state<string | null>(null);
+	let editTagName = $state<string | null>(null);
+	let editTagColor = $state<string | null>(null);
 	let lightboxIndex = $state<number | null>(null);
 
 	onMount(() => {
 		editMood = note.mood || 0;
 		editDate = formatDateYYYYMMDD(note.entry_date);
+		editTagId = note.tag_id ?? null;
+		editTagName = note.tag?.name ?? null;
+		editTagColor = note.tag?.color ?? null;
 		console.log('NoteBox Mounted', { note }, { editMood, editDate });
 	});
 
 	function enterEdit() {
 		editMood = note.mood || 0;
 		editDate = formatDateYYYYMMDD(note.entry_date);
+		editTagId = note.tag_id ?? null;
+		editTagName = note.tag?.name ?? null;
+		editTagColor = note.tag?.color ?? null;
 		interactiveMode = true;
 		editMode = true;
 	}
@@ -66,7 +77,11 @@
 					title: updatedTitle || null,
 					body: updatedBody,
 					mood: editMood || null,
-					entry_date: editDate
+					entry_date: editDate,
+					topic_id: topicId,
+					tag_id: editTagId,
+					tag_name: editTagName,
+					tag_color: editTagColor
 				})
 			});
 			if (!res.ok) throw new Error(await res.text());
@@ -141,6 +156,13 @@
 		if (res.ok) onMutate?.();
 		else console.error('Upload failed', await res.text());
 		input.value = '';
+	}
+
+	function onTagChange(tagId: string | null, tagName: string | null, tagColor: string | null) {
+		console.log('Tag changed', { tagId, tagName, tagColor });
+		editTagId = tagId;
+		editTagName = tagName;
+		editTagColor = tagColor;
 	}
 
 	let bodyEl = $state<HTMLDivElement | null>(null);
@@ -271,9 +293,27 @@
 	{/if}
 	<div class="flex w-full flex-row items-center text-xs">
 		{#if editMode}
-			<input type="date" class="input-sm input text-xs" bind:value={editDate} />
+			<div class="flex w-full flex-col items-start gap-2 sm:flex-row sm:items-center">
+				<input
+					type="date"
+					id="editDate_{note.id}"
+					class="input-sm input text-xs"
+					bind:value={editDate}
+				/>
+				<TagPicker {tags} selectedTagId={editTagId} onChange={onTagChange} />
+			</div>
 		{:else}
-			<span>{formatDate(note.entry_date)}</span>
+			<div class="flex items-center gap-4">
+				<span>{formatDate(note.entry_date)}</span>
+				{#if note.tag}
+					<span
+						class="rounded-full px-1 pr-2 py-0.5 text-xs text-white flex items-center gap-1"
+						style="background-color: {note.tag.color}"
+					>
+						<span>🏷️</span><span>{note.tag.name}</span>
+					</span>
+				{/if}
+			</div>
 		{/if}
 		{#if !editMode}
 			{#if interactiveMode}
