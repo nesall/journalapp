@@ -47,6 +47,12 @@ function formatDateYYYYMMDD(dateStr: string): string {
   return dateStr.split('T')[0];
 }
 
+function parseSearchQuery(q: string): { text: string; tag: string | null } {
+  const tagMatch = q.match(/tag:\s*(\S+)/i);
+  const tag = tagMatch ? tagMatch[1] : null;
+  const text = q.replace(/tag:\s*\S+/i, '').trim();
+  return { text, tag };
+}
 
 export {
   nextRandomId,
@@ -55,5 +61,6 @@ export {
   moods,
   formatDate,
   formatTime,
-  formatDateYYYYMMDD
+  formatDateYYYYMMDD,
+  parseSearchQuery
 }
