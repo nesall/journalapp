@@ -7,12 +7,12 @@ for file in migrations/*.sql; do
     version=$(basename "$file" .sql)
     echo "Checking $version..."
 
-    applied=$(psql "$DB_URL" -tAc "SELECT COUNT(*) FROM schema_migrations WHERE version='$version';")
+    applied=$(psql --dbname="$DB_URL" -t -A -c "SELECT COUNT(*) FROM schema_migrations WHERE version='$version';")
 
     if [ "$applied" -eq 0 ]; then
         echo "Applying $version..."
-        psql "$DB_URL" -f "$file"
-        psql "$DB_URL" -c "INSERT INTO schema_migrations(version) VALUES('$version');"
+        psql --dbname="$DB_URL" -f "$file"
+        psql --dbname="$DB_URL" -c "INSERT INTO schema_migrations(version) VALUES('$version');"
         echo "Done: $version"
     else
         echo "Skipping $version (already applied)"
