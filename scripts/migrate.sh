@@ -1,6 +1,11 @@
 #!/bin/bash
 set -e
 
+# Load .env if present
+if [ -f .env ]; then
+    export $(grep -v '^#^' .env | xargs)
+fi
+
 DB_URL=${DATABASE_URL:-"postgresql://journalapp_user:password@localhost/journalapp"}
 
 for file in migrations/*.sql; do

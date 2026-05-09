@@ -2,8 +2,8 @@
 set -e
 cd /var/www/journalapp
 git pull
-npm install --production
+npm install
 npm run build
 bash scripts/migrate.sh
-#systemctl  restart journalapp
+sudo systemctl restart journalapp
 echo "Deployed!"
