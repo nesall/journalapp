@@ -4,9 +4,7 @@ import adapter from '@sveltejs/adapter-node';
 const config = {
   kit: {
     adapter: adapter(),
-    csrf: {
-      checkOrigin: true,
-    }
+    bodySize: 20 * 1024 * 1024,  // 20MB
   }
 };
 
