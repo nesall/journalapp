@@ -84,6 +84,7 @@
 					tag_color: editTagColor
 				})
 			});
+			console.log('Save response', { res });
 			if (!res.ok) throw new Error(await res.text());
 			onMutate?.();
 			editMode = false;

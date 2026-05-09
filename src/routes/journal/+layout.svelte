@@ -25,14 +25,14 @@
 				<!-- Mobile: toggle button -->
 				<button
 					type="button"
-					class="btn btn-sm md:hidden {searchOpen ? 'preset-filled-primary-500' : 'preset-outlined-primary-200-800'}"
+					class="btn md:hidden {searchOpen ? 'preset-filled-primary-500' : 'preset-outlined-primary-200-800'}"
 					onclick={() => searchOpen = !searchOpen}
 				>🔍</button>
 				<span class="hidden text-sm text-surface-700-300 sm:block">
 					{data.user.display_name ?? data.user.email}
 				</span>
 				<form method="POST" action="/logout">
-					<button type="submit" class="btn btn-sm flex items-center gap-1 md:preset-tonal">
+					<button type="submit" class="btn flex items-center gap-1 md:preset-tonal">
 						<span class="text-lg">&#x21A6;</span>
 						<span class="hidden md:inline-block">Logout</span>
 					</button>

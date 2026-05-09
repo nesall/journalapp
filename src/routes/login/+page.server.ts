@@ -32,7 +32,7 @@ export const actions: Actions = {
       path: '/',
       httpOnly: true,
       sameSite: 'lax',
-      secure: false, // set true in production
+      secure: true, // set true in production
       maxAge: 60 * 60 * 24 * 30
     });
 

@@ -4,7 +4,7 @@
 </script>
 
 <div class="flex min-h-screen items-center justify-center p-4">
-	<div class="w-full max-w-md card bg-surface-100 p-8">
+	<div class="w-full max-w-md card bg-surface-100-900 p-8">
 		<h1 class="mb-6 text-center h2">Journal</h1>
 
 		{#if form?.error}
