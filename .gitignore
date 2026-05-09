@@ -13,6 +13,8 @@ package-lock.json
 /build
 
 /static/uploads
+logs.txt
+node.pid
 
 # OS
 .DS_Store
