@@ -12,10 +12,13 @@
 
 	onMount(async () => {});
 
+  function handleMutate() {
+		invalidateAll();
+		newEntryId = null;
+	}
+
 	$effect(() => {
-		if (form?.newEntryId) {
-			newEntryId = form.newEntryId;
-		}
+		newEntryId = form?.newEntryId ?? null;
 	});
 
 	$effect(() => {
@@ -61,7 +64,7 @@
 				{note}
 				tags={data.tags}
 				topicId={data.topic.id}
-				onMutate={invalidateAll}
+				onMutate={handleMutate}
 				autoEdit={note.id === newEntryId}
 			/>
 		{/each}

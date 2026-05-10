@@ -8,7 +8,7 @@
 		<h1 class="mb-6 text-center h2">Journal</h1>
 
 		{#if form?.error}
-			<aside class="alert preset-tonal-error mb-4">
+			<aside class="alert mb-4 preset-tonal-error">
 				<p>{form.error}</p>
 			</aside>
 		{/if}
@@ -22,11 +22,12 @@
 				<span>Password</span>
 				<input class="input" type="password" name="password" required />
 			</label>
-			<button type="submit" class="preset-filled-primary-500 btn w-full">Login</button>
+			<button type="submit" class="btn w-full preset-filled-primary-500">Login</button>
 		</form>
 
-		<p class="mt-4 text-center text-sm">
-			No account? <a href="/register" class="anchor">Register</a>
-		</p>
+		<div class="mt-4 text-center text-sm flex flex-col gap-4">
+			<a href="/forgot-password" class="anchor">Forgot password?</a>
+			<div>No account? <a href="/register" class="anchor">Register</a></div>
+		</div>
 	</div>
 </div>

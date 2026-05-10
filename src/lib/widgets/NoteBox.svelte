@@ -47,7 +47,6 @@
 	}
 
 	async function cancelEdit() {
-		// reset DOM content back to saved values
 		if (bodyEl) bodyEl.innerText = note.body;
 		if (titleEl) titleEl.innerText = note.title ?? '';
 		editMood = note.mood ?? 0;
