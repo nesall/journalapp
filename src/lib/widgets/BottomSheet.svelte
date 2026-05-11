@@ -16,6 +16,36 @@
 	function onKeydown(e: KeyboardEvent) {
 		if (e.key === 'Escape') onClose();
 	}
+
+	const CLOSE_THRESHOLD = 120;
+
+	let sheetEl = $state<HTMLDivElement | null>(null);
+	let dragY = $state(0);
+	let dragging = $state(false);
+	let startY = 0;
+
+	function onTouchStart(e: TouchEvent) {
+		startY = e.touches[0].clientY;
+		dragging = true;
+	}
+
+	function onTouchMove(e: TouchEvent) {
+		if (!dragging) return;
+		const delta = e.touches[0].clientY - startY;
+		if (delta > 0) {
+			dragY = delta;
+		}
+	}
+
+	function onTouchEnd() {
+		dragging = false;
+		if (dragY > CLOSE_THRESHOLD) {
+			dragY = 0;
+			onClose();
+		} else {
+			dragY = 0; // snap back
+		}
+	}
 </script>
 
 <svelte:window onkeydown={onKeydown} />
@@ -31,18 +61,29 @@
 
 	<!-- Sheet -->
 	<div
-		class="fixed inset-x-0 bottom-0 z-50 flex max-h-[98dvh] flex-col rounded-t-2xl bg-surface-100-900 shadow-xl h-[90dvh] m-0"
+		bind:this={sheetEl}
+		class="fixed inset-x-0 bottom-0 z-50 m-0 flex h-[90dvh] max-h-[98dvh] flex-col rounded-t-2xl bg-surface-100-900 shadow-xl"
+		style="transform: translateY({dragY}px); transition: {dragging
+			? 'none'
+			: 'transform 0.3s ease'};"
 		transition:fly={{ y: 600, duration: 300 }}
 		role="dialog"
 		aria-modal="true"
+		ontouchstart={onTouchStart}
+		ontouchend={onTouchEnd}
+		tabindex="-1"
 	>
 		<!-- Handle -->
-		<div class="flex justify-center pt-3 pb-1 shrink-0">
+		<div
+			class="flex shrink-0 cursor-grab touch-none justify-center pt-3 pb-1"
+			role="presentation"
+			ontouchmove={onTouchMove}
+		>
 			<div class="h-1.5 w-10 rounded-full bg-surface-300"></div>
 		</div>
 
 		<!-- Scrollable content -->
-		<div class="flex-1 flex min-h-0">
+		<div class="flex min-h-0 flex-1">
 			{@render children()}
 		</div>
 	</div>
