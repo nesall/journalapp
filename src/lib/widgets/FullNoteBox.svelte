@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Note, TopicTag } from '$lib/types';
-	import { formatDate, formatTime, moods } from '$lib/utils';
+	import { formatDate, moods } from '$lib/utils';
 	import Lightbox from './Lightbox.svelte';
 	import TagPicker from './TagPicker.svelte';
 
@@ -18,19 +18,23 @@
 	let saving = $state(false);
 	let deleting = $state(false);
 
+	let editTitle = $state(note.title ?? '');
+	let editBody = $state(note.body);
 	let editMood = $state(note.mood ?? 0);
 	let editDate = $state(note.entry_date);
 	let editTagId = $state<string | null>(note.tag_id ?? null);
 	let editTagName = $state<string | null>(null);
 	let editTagColor = $state<string | null>(null);
 
-	let bodyEl = $state<HTMLDivElement | null>(null);
-	let titleEl = $state<HTMLDivElement | null>(null);
+	// let bodyEl = $state<HTMLDivElement | null>(null);
+	// let titleEl = $state<HTMLDivElement | null>(null);
 	let lightboxIndex = $state<number | null>(null);
 
 	const images = $derived(note.media ?? []);
 
 	function enterEdit() {
+		editTitle = note.title ?? '';
+		editBody = note.body;
 		editMood = note.mood ?? 0;
 		editDate = note.entry_date;
 		editTagId = note.tag_id ?? null;
@@ -40,8 +44,6 @@
 	}
 
 	function cancelEdit() {
-		if (bodyEl) bodyEl.innerText = note.body;
-		if (titleEl) titleEl.innerText = note.title ?? '';
 		editMood = note.mood ?? 0;
 		editDate = note.entry_date;
 		editTagId = note.tag_id ?? null;
@@ -49,10 +51,7 @@
 	}
 
 	async function saveEdit() {
-		const updatedTitle = titleEl?.innerText.trim() ?? '';
-		const updatedBody = bodyEl?.innerText.trim() ?? '';
-
-		if (!updatedBody) {
+		if (!editBody.trim()) {
 			await deleteNote();
 			return;
 		}
@@ -64,8 +63,8 @@
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
 					id: note.id,
-					title: updatedTitle || null,
-					body: updatedBody,
+					title: editTitle || null,
+					body: editBody,
 					mood: editMood || null,
 					entry_date: editDate,
 					tag_id: editTagId,
@@ -137,13 +136,13 @@
 		editTagColor = tagColor;
 	}
 
-	$effect(() => {
-		if (bodyEl && !editMode) bodyEl.innerText = note.body;
-		if (titleEl && !editMode) titleEl.innerText = note.title ?? '';
-	});
+	// $effect(() => {
+	// 	if (bodyEl && !editMode) bodyEl.innerText = note.body;
+	// 	if (titleEl && !editMode) titleEl.innerText = note.title ?? '';
+	// });
 </script>
 
-<div class="flex flex-col px-4 pt-2 pb-8">
+<div class="flex flex-col px-4 pt-2 pb-8 h-full">
 	<!-- Top bar -->
 	<div class="mb-3 flex items-center justify-between gap-2">
 		<button type="button" class="btn preset-outlined-surface-500 btn-sm" onclick={onClose}>
@@ -173,15 +172,16 @@
 	</div>
 
 	<!-- Title -->
-	<div
-		bind:this={titleEl}
-		contenteditable={editMode}
-		class="text-lg font-bold outline-none {editMode
-			? 'mb-2 border-b border-surface-300 pb-1'
-			: 'mb-1'}"
-	>
-		{note.title ?? ''}
-	</div>
+	{#if editMode}
+		<input
+			class="input mb-2 text-lg font-bold"
+			type="text"
+			placeholder="Title (optional)"
+			bind:value={editTitle}
+		/>
+	{:else}
+		<div class="mb-1 text-lg font-bold">{note.title ?? ''}</div>
+	{/if}
 
 	<!-- Meta: date + mood + tag -->
 	<div class="mb-3 flex flex-wrap items-center gap-2 text-xs text-surface-500">
@@ -217,7 +217,7 @@
 
 	<!-- Images -->
 	{#if editMode}
-		<div class="mb-3 flex flex-wrap items-center gap-2">
+		<div class="mb-4 mt-4 flex flex-wrap items-center gap-2">
 			{#each images as media}
 				<div class="group relative">
 					<img src={media.url} alt="media" class="h-20 w-20 rounded object-cover" />
@@ -240,7 +240,7 @@
 		</div>
 	{:else if images.length > 0}
 		<div
-			class="mb-3 grid gap-2"
+			class="mb-4 mt-4 grid gap-2"
 			style="grid-template-columns: repeat(auto-fill, minmax(100px, 1fr))"
 		>
 			{#each images as media, i}
@@ -257,15 +257,15 @@
 	{/if}
 
 	<!-- Body -->
-	<div
-		bind:this={bodyEl}
-		contenteditable={editMode}
-		class="text-sm leading-relaxed outline-none {editMode
-			? 'min-h-[8rem] border-b border-surface-300 pb-2'
-			: ''}"
-	>
-		{note.body}
-	</div>
+	{#if editMode}
+		<textarea
+			class="textarea min-h-48 w-full text-sm leading-relaxed flex-1 resize-none"
+			placeholder="Write something..."
+			bind:value={editBody}
+		></textarea>
+	{:else}
+		<div class="text-sm leading-relaxed whitespace-pre-wrap flex-1 min-h-0 overflow-auto">{note.body}</div>
+	{/if}
 </div>
 
 <!-- Lightbox -->

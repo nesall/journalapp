@@ -31,7 +31,7 @@
 
 	<!-- Sheet -->
 	<div
-		class="fixed inset-x-0 bottom-0 z-50 flex max-h-[92dvh] flex-col rounded-t-2xl bg-surface-100 shadow-xl"
+		class="fixed inset-x-0 bottom-0 z-50 flex max-h-[98dvh] flex-col rounded-t-2xl bg-surface-100-900 shadow-xl h-[90dvh] m-0"
 		transition:fly={{ y: 600, duration: 300 }}
 		role="dialog"
 		aria-modal="true"
@@ -42,7 +42,7 @@
 		</div>
 
 		<!-- Scrollable content -->
-		<div class="flex-1 overflow-y-auto">
+		<div class="flex-1 flex min-h-0">
 			{@render children()}
 		</div>
 	</div>

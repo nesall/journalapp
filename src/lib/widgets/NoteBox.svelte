@@ -5,6 +5,8 @@
 	import { slide } from 'svelte/transition';
 	import Lightbox from '$lib/widgets/Lightbox.svelte';
 	import TagPicker from '$lib/widgets/TagPicker.svelte';
+	import BottomSheet from './BottomSheet.svelte';
+	import FullNoteBox from './FullNoteBox.svelte';
 
 	interface Props {
 		note: Note;
@@ -17,83 +19,16 @@
 	let { note, topicId, tags = [], autoEdit = false, onMutate }: Props = $props();
 
 	let interactiveMode = $state(false);
-	let editMode = $state(false);
-	let saving = $state(false);
 	let deleting = $state(false);
-	let editMood = $state(0);
-	let editDate = $state('');
-	let editTagId = $state<string | null>(null);
-	let editTagName = $state<string | null>(null);
-	let editTagColor = $state<string | null>(null);
 	let lightboxIndex = $state<number | null>(null);
+	let fullMode = $state(false);
 
 	onMount(() => {
-		editMood = note.mood || 0;
-		editDate = formatDateYYYYMMDD(note.entry_date);
-		editTagId = note.tag_id ?? null;
-		editTagName = note.tag?.name ?? null;
-		editTagColor = note.tag?.color ?? null;
-		console.log('NoteBox Mounted', { note }, { editMood, editDate });
+		console.log('NoteBox Mounted', { note });
+		if (autoEdit) {
+			enterFullMode();
+		}
 	});
-
-	function enterEdit() {
-		editMood = note.mood || 0;
-		editDate = formatDateYYYYMMDD(note.entry_date);
-		editTagId = note.tag_id ?? null;
-		editTagName = note.tag?.name ?? null;
-		editTagColor = note.tag?.color ?? null;
-		interactiveMode = true;
-		editMode = true;
-	}
-
-	async function cancelEdit() {
-		if (bodyEl) bodyEl.innerText = note.body;
-		if (titleEl) titleEl.innerText = note.title ?? '';
-		editMood = note.mood ?? 0;
-		editDate = formatDateYYYYMMDD(note.entry_date);
-		editMode = false;
-		interactiveMode = false;
-	}
-
-	async function saveEdit() {
-		const updatedTitle = titleEl?.innerText.trim() ?? '';
-		const updatedBody = bodyEl?.innerText.trim() ?? '';
-		if (!updatedBody) {
-			alert('Body cannot be empty');
-			return;
-		}
-		if (!updatedBody && !updatedTitle) {
-			await deleteNote();
-			return;
-		}
-		saving = true;
-		try {
-			const res = await fetch(`/journal/${topicId}/entries`, {
-				method: 'PATCH',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					id: note.id,
-					title: updatedTitle || null,
-					body: updatedBody,
-					mood: editMood || null,
-					entry_date: editDate,
-					topic_id: topicId,
-					tag_id: editTagId,
-					tag_name: editTagName,
-					tag_color: editTagColor
-				})
-			});
-			console.log('Save response', { res });
-			if (!res.ok) throw new Error(await res.text());
-			onMutate?.();
-			editMode = false;
-			interactiveMode = false;
-		} catch (err) {
-			console.error('Save failed', err);
-		} finally {
-			saving = false;
-		}
-	}
 
 	async function deleteNote() {
 		if (!autoEdit && !confirm('Delete this note?')) return;
@@ -127,53 +62,14 @@
 					: 'layout-4plus'
 	);
 
-	async function removeImage(mediaId: string) {
-		if (!confirm('Remove this image?')) return;
-
-		const res = await fetch(`/journal/${topicId}/media`, {
-			method: 'DELETE',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ mediaId })
-		});
-
-		if (res.ok) onMutate?.();
+	function enterFullMode() {
+		fullMode = true;
+		interactiveMode = false;
 	}
 
-	async function handleImageUpload(e: Event) {
-		const input = e.target as HTMLInputElement;
-		const file = input.files?.[0];
-		if (!file) return;
-
-		const formData = new FormData();
-		formData.append('file', file);
-		formData.append('entry_id', note.id);
-
-		const res = await fetch(`/journal/${topicId}/media`, {
-			method: 'POST',
-			body: formData
-		});
-
-		if (res.ok) onMutate?.();
-		else console.error('Upload failed', await res.text());
-		input.value = '';
-	}
-
-	function onTagChange(tagId: string | null, tagName: string | null, tagColor: string | null) {
-		console.log('Tag changed', { tagId, tagName, tagColor });
-		editTagId = tagId;
-		editTagName = tagName;
-		editTagColor = tagColor;
-	}
-
-	let bodyEl = $state<HTMLDivElement | null>(null);
-	let titleEl = $state<HTMLDivElement | null>(null);
-
+	$effect(() => {});
 	$effect(() => {
-		if (bodyEl && !editMode) bodyEl.innerText = note.body;
-		if (titleEl && !editMode) titleEl.innerText = note.title ?? 'Untitled';
-	});
-	$effect(() => {
-		if (autoEdit) enterEdit();
+		// if (autoEdit) enterEdit();
 	});
 </script>
 
@@ -186,51 +82,15 @@
 	tabindex="-1"
 >
 	<div class="flex items-center text-sm font-bold capitalize">
-		<div bind:this={titleEl} contenteditable={editMode} class="flex-1 outline-none">
+		<div class="flex-1 outline-none">
 			{note.title}
 		</div>
-		{#if editMode}
-			<div class="ml-auto flex gap-1">
-				{#each moods as emoji, i}
-					<button
-						type="button"
-						class="text-lg transition-all {editMood === i + 1
-							? 'scale-125 opacity-100'
-							: 'opacity-40 hover:opacity-80'}"
-						onclick={() => (editMood = editMood === i + 1 ? 0 : i + 1)}>{emoji}</button
-					>
-				{/each}
-			</div>
-		{:else if note.mood}
+		{#if note.mood}
 			<span class="ml-auto text-lg text-surface-500">{moods[note.mood - 1]}</span>
 		{/if}
 	</div>
 	<hr class="hr" />
-	{#if editMode}
-		<div class="flex flex-wrap items-center gap-2">
-			{#each images as media}
-				<div class="group relative">
-					<img src={media.url} alt="media" class="h-16 w-16 rounded object-cover" />
-					<button
-						type="button"
-						class="absolute top-1 right-1 flex h-5 w-5 items-center justify-center rounded-full
-                 bg-error-500 text-xs text-white"
-						onclick={() => removeImage(media.id)}
-					>
-						✕
-					</button>
-				</div>
-			{/each}
-			<label
-				class="flex h-16 w-16 cursor-pointer items-center justify-center
-              rounded border-2 border-dashed border-surface-400 text-surface-400
-              transition-colors hover:border-primary-500 hover:text-primary-500"
-			>
-				<input type="file" accept="image/*" class="hidden" onchange={handleImageUpload} />
-				<span class="text-2xl">+</span>
-			</label>
-		</div>
-	{:else if images.length > 0}
+	{#if images.length > 0}
 		<div class="gallery {gridClass}">
 			{#each images as media, j}
 				{#if j < 10}
@@ -242,7 +102,6 @@
 		</div>
 	{/if}
 
-	<!-- Lightbox -->
 	{#if lightboxIndex !== null}
 		<Lightbox
 			{images}
@@ -253,38 +112,19 @@
 		/>
 	{/if}
 
-	<div
-		bind:this={bodyEl}
-		class="px-0 text-sm outline-none {editMode
-			? 'border-b border-surface-300 pb-1 focus:border-primary-500'
-			: 'truncate-text'}"
-		contenteditable={editMode}
-	>
+	<button class="truncate-text px-0 text-left text-sm outline-none" onclick={enterFullMode}>
 		{note.body}
-	</div>
+	</button>
 	<hr class="hr" />
-	{#if editMode}
-		<div class="flex items-center gap-2" transition:slide>
-			<button
-				class="btn flex-1 preset-filled-primary-500 btn-sm"
-				onclick={saveEdit}
-				disabled={saving}
-			>
-				{saving ? '...' : '✓ Save'}
-			</button>
-			<button class="ml-auto btn flex-1 preset-outlined-secondary-500 btn-sm" onclick={cancelEdit}>
-				✕ Cancel
-			</button>
-		</div>
-	{:else if interactiveMode}
+	{#if interactiveMode}
 		<div class="flex items-center gap-2" transition:slide>
 			<button
 				type="button"
 				class="btn flex-1 preset-outlined-secondary-500 btn-sm"
-				onclick={enterEdit}
+				onclick={enterFullMode}
 				disabled={deleting}
 			>
-				✏️ Edit
+				✏️ View / Edit
 			</button>
 			<button class="ml-auto btn flex-1 preset-filled-error-500 btn-sm" onclick={deleteNote}>
 				{deleting ? '...' : '🗑️ Delete'}
@@ -292,49 +132,49 @@
 		</div>
 	{/if}
 	<div class="flex w-full flex-row items-center text-xs">
-		{#if editMode}
-			<div class="flex w-full flex-col items-start gap-2 sm:flex-row sm:items-center">
-				<input
-					type="date"
-					id="editDate_{note.id}"
-					class="input-sm input text-xs"
-					bind:value={editDate}
-				/>
-				<TagPicker {tags} selectedTagId={editTagId} onChange={onTagChange} />
-			</div>
-		{:else}
-			<div class="flex items-center gap-4">
-				<span>{formatDate(note.entry_date)}</span>
-				{#if note.tag}
-					<span
-						class="rounded-full px-1 pr-2 py-0.5 text-xs text-white flex items-center gap-1"
-						style="background-color: {note.tag.color}"
-					>
-						<span>🏷️</span><span>{note.tag.name}</span>
-					</span>
-				{/if}
-			</div>
-		{/if}
-		{#if !editMode}
-			{#if interactiveMode}
-				<button
-					class="ml-auto btn preset-outlined-secondary-500 btn-sm"
-					onclick={() => (interactiveMode = false)}
+		<div class="flex items-center gap-4">
+			<span>{formatDate(note.entry_date)}</span>
+			{#if note.tag}
+				<span
+					class="flex items-center gap-1 rounded-full px-1 py-0.5 pr-2 text-xs text-white"
+					style="background-color: {note.tag.color}"
 				>
-					&#10005;
-				</button>
-			{:else}
-				<button
-					type="button"
-					class="ms-auto btn preset-outlined-surface-500 btn-sm"
-					onclick={() => (interactiveMode = true)}
-				>
-					&#8942;
-				</button>
+					<span>🏷️</span><span>{note.tag.name}</span>
+				</span>
 			{/if}
+		</div>
+		{#if interactiveMode}
+			<button
+				class="ml-auto btn preset-outlined-secondary-500 btn-sm"
+				onclick={() => (interactiveMode = false)}
+			>
+				&#10005;
+			</button>
+		{:else}
+			<button
+				type="button"
+				class="ms-auto btn preset-outlined-surface-500 btn-sm"
+				onclick={() => (interactiveMode = true)}
+			>
+				&#8942;
+			</button>
 		{/if}
 	</div>
 </div>
+
+<!-- Full screen bottom sheet -->
+<BottomSheet open={fullMode} onClose={() => (fullMode = false)}>
+	<FullNoteBox
+		{note}
+		{topicId}
+		{tags}
+		onMutate={() => {
+			fullMode = false;
+			onMutate?.();
+		}}
+		onClose={() => (fullMode = false)}
+	/>
+</BottomSheet>
 
 <style>
 	.truncate-text {
