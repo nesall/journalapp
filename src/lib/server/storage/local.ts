@@ -1,13 +1,31 @@
-import { writeFile, unlink, mkdir } from 'fs/promises';
+import { writeFile, unlink, mkdir, rmdir } from 'fs/promises';
 import { existsSync } from 'fs';
-import { join, extname } from 'path';
+import { join, extname, dirname } from 'path';
 import { randomBytes } from 'crypto';
 import type { StorageProvider } from './types';
+import sharp from 'sharp';
 
 const UPLOAD_DIR = process.env.UPLOAD_DIR ?? 'static/uploads';
 const BASE_URL = process.env.BASE_URL ?? '';
 
 export class LocalStorageProvider implements StorageProvider {
+  async uploadWithThumbnail(
+    file: Buffer,
+    filename: string,
+    mimeType: string
+  ): Promise<{ key: string; thumbnailKey: string }> {
+    const key = await this.upload(file, filename, mimeType);
+
+    // generate thumbnail
+    const thumbnail = await sharp(file)
+      .resize(300, 300, { fit: 'cover', position: 'centre' })
+      .jpeg({ quality: 80 })
+      .toBuffer();
+
+    const thumbnailKey = await this.upload(thumbnail, `thumb_${filename}`, 'image/jpeg');
+    return { key, thumbnailKey };
+  }
+
   async upload(file: Buffer, filename: string, mimeType: string): Promise<string> {
     const ext = extname(filename) || this.extFromMime(mimeType);
     const key = `${randomBytes(16).toString('hex')}${ext}`;
@@ -26,6 +44,10 @@ export class LocalStorageProvider implements StorageProvider {
   async delete(key: string): Promise<void> {
     const filepath = join(UPLOAD_DIR, key);
     await unlink(filepath).catch(() => { }); // ignore if already gone
+
+    // remove parent dir if empty
+    const dir = dirname(filepath);
+    await rmdir(dir).catch(() => { }); // silently ignores if not empty
   }
 
   private extFromMime(mime: string): string {

@@ -1,6 +1,7 @@
 import type { RequestHandler } from './$types';
 import { json, error } from '@sveltejs/kit';
 import sql from '$lib/db';
+import storage from '$lib/server/storage';
 
 export const PATCH: RequestHandler = async ({ request, locals }) => {
   if (!locals.user) error(401);
@@ -47,11 +48,23 @@ export const DELETE: RequestHandler = async ({ request, locals }) => {
   if (!locals.user) error(401);
   const { id } = await request.json();
 
+  // fetch media keys before deleting
+  const media = await sql`
+        SELECT url, thumbnail_url FROM entry_media
+        WHERE entry_id = ${id}
+    `;
+
   await sql`
 		DELETE FROM entries
 		WHERE id = ${id}
 		AND user_id = ${locals.user.id}
 	`;
+
+  // delete files from storage (entry_media rows cascade automatically)
+  for (const m of media) {
+    await storage.delete(m.url);
+    if (m.thumbnail_url) await storage.delete(m.thumbnail_url);
+  }
 
   return json({ success: true });
 };

@@ -1,10 +1,9 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import type { Note, TopicTag } from '$lib/types';
-	import { formatDate, formatDateYYYYMMDD, moods } from '$lib/utils';
+	import { formatDate, moods } from '$lib/utils';
 	import { slide } from 'svelte/transition';
 	import Lightbox from '$lib/widgets/Lightbox.svelte';
-	import TagPicker from '$lib/widgets/TagPicker.svelte';
 	import BottomSheet from './BottomSheet.svelte';
 	import FullNoteBox from './FullNoteBox.svelte';
 
@@ -24,15 +23,15 @@
 	let fullMode = $state(false);
 
 	onMount(() => {
-		console.log('NoteBox Mounted', { note });
+		console.log('NoteBox Mounted', { autoEdit, note });
 		if (autoEdit) {
 			enterFullMode();
 		}
 	});
 
 	async function deleteNote() {
+		console.log('NoteBox.deleteNote', { autoEdit });
 		if (!autoEdit && !confirm('Delete this note?')) return;
-
 		deleting = true;
 		try {
 			const res = await fetch(`/journal/${topicId}/entries`, {
@@ -48,6 +47,7 @@
 		} finally {
 			deleting = false;
 		}
+		interactiveMode = false;
 	}
 
 	const images = $derived(note.media || []);
@@ -63,13 +63,16 @@
 	);
 
 	function enterFullMode() {
+		console.log('NoteBox: Entering full mode');
 		fullMode = true;
 		interactiveMode = false;
 	}
 
-	$effect(() => {});
 	$effect(() => {
-		// if (autoEdit) enterEdit();
+		// console.log('NoteBox: Note updated', { autoEdit, note });
+	});
+	$effect(() => {
+		if (autoEdit) enterFullMode();
 	});
 </script>
 
@@ -113,7 +116,7 @@
 	{/if}
 
 	<button class="truncate-text px-0 text-left text-sm outline-none" onclick={enterFullMode}>
-		{note.body}
+		{note.body || 'No content'}
 	</button>
 	<hr class="hr" />
 	{#if interactiveMode}
@@ -168,8 +171,9 @@
 		{note}
 		{topicId}
 		{tags}
+		{autoEdit}
 		onMutate={() => {
-			fullMode = false;
+			autoEdit = false;
 			onMutate?.();
 		}}
 		onClose={() => (fullMode = false)}

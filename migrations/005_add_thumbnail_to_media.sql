@@ -1,0 +1,1 @@
+ALTER TABLE entry_media ADD COLUMN thumbnail_url TEXT;

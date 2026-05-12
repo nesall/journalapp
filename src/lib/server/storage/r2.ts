@@ -5,6 +5,10 @@ export class R2StorageProvider implements StorageProvider {
     throw new Error('R2 not configured');
   }
 
+  async uploadWithThumbnail(file: Buffer, filename: string, mimeType: string): Promise<{ key: string; thumbnailKey: string }> {
+    throw new Error('R2 not configured');
+  }
+
   getUrl(key: string): string {
     throw new Error('R2 not configured');
   }

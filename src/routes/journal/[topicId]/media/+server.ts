@@ -28,21 +28,23 @@ export const POST: RequestHandler = async ({ request, locals, params }) => {
   if (entries.length === 0) error(404, 'Entry not found');
 
   const buffer = Buffer.from(await file.arrayBuffer());
-  const key = await storage.upload(buffer, file.name, file.type);
+  const { key, thumbnailKey } = await storage.uploadWithThumbnail(buffer, file.name, file.type);
   const url = storage.getUrl(key);
+  const thumbnailUrl = storage.getUrl(thumbnailKey);
 
   const media = await sql`
-        INSERT INTO entry_media (entry_id, type, url, metadata)
+        INSERT INTO entry_media (entry_id, type, url, thumbnail_url, metadata)
         VALUES (
             ${entryId},
             'image',
             ${key},
+            ${thumbnailKey},
             ${JSON.stringify({ originalName: file.name, mimeType: file.type, size: file.size })}
         )
-        RETURNING id, type, url
+        RETURNING id, type, url, thumbnail_url
     `;
 
-  return json({ id: media[0].id, type: media[0].type, url });
+  return json({ id: media[0].id, type: media[0].type, url, thumbnailUrl });
 };
 
 export const DELETE: RequestHandler = async ({ request, locals }) => {

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Note, TopicTag } from '$lib/types';
-	import { formatDate, moods } from '$lib/utils';
+	import { formatDate, moods, nextRandomId } from '$lib/utils';
+	import { tick } from 'svelte';
 	import Lightbox from './Lightbox.svelte';
 	import TagPicker from './TagPicker.svelte';
 
@@ -8,11 +9,12 @@
 		note: Note;
 		topicId: string;
 		tags?: TopicTag[];
+		autoEdit?: boolean;
 		onMutate?: () => void;
 		onClose: () => void;
 	}
 
-	let { note, topicId, tags = [], onMutate, onClose }: Props = $props();
+	let { note, topicId, tags = [], autoEdit, onMutate, onClose }: Props = $props();
 
 	let editMode = $state(false);
 	let saving = $state(false);
@@ -26,11 +28,11 @@
 	let editTagName = $state<string | null>(null);
 	let editTagColor = $state<string | null>(null);
 
-	// let bodyEl = $state<HTMLDivElement | null>(null);
-	// let titleEl = $state<HTMLDivElement | null>(null);
 	let lightboxIndex = $state<number | null>(null);
 
 	const images = $derived(note.media ?? []);
+
+	const textareaId = 'fullnote-textarea-' + nextRandomId(8);
 
 	function enterEdit() {
 		editTitle = note.title ?? '';
@@ -41,6 +43,9 @@
 		editTagName = null;
 		editTagColor = null;
 		editMode = true;
+		tick().then(() => {
+			document.getElementById(textareaId)?.focus();
+		});
 	}
 
 	function cancelEdit() {
@@ -140,34 +145,28 @@
 	// 	if (bodyEl && !editMode) bodyEl.innerText = note.body;
 	// 	if (titleEl && !editMode) titleEl.innerText = note.title ?? '';
 	// });
+	$effect(() => {
+		if (autoEdit) enterEdit();
+	});
 </script>
 
-<div class="flex flex-col px-4 pt-2 pb-8 h-full">
+<div class="flex h-full w-full flex-col px-4 pt-2 pb-4">
 	<!-- Top bar -->
 	<div class="mb-3 flex items-center justify-between gap-2">
-		<button type="button" class="btn preset-outlined-surface-500 btn-sm" onclick={onClose}>
-			✕ Close
-		</button>
 		{#if editMode}
-			<div class="flex gap-2">
-				<button class="btn preset-filled-primary-500 btn-sm" onclick={saveEdit} disabled={saving}
-					>{saving ? '...' : '✓ Save'}</button
-				>
-				<button
-					class="btn preset-outlined-secondary-500 btn-sm"
-					onclick={cancelEdit}
-					disabled={saving}>Cancel</button
-				>
-			</div>
+			<button class="btn preset-outlined-secondary-500" onclick={cancelEdit} disabled={saving}>
+				Cancel
+			</button>
+			<button class="btn preset-filled-primary-500" onclick={saveEdit} disabled={saving}>
+				{saving ? '...' : '✓ Save'}
+			</button>
 		{:else}
 			<div class="flex gap-2">
-				<button class="btn preset-outlined-secondary-500 btn-sm" onclick={enterEdit}>
-					✏️ Edit
-				</button>
-				<button class="btn preset-filled-error-500 btn-sm" onclick={deleteNote} disabled={deleting}
-					>{deleting ? '...' : '🗑️'}</button
-				>
+				<button class="btn preset-outlined-secondary-500" onclick={enterEdit}> ✏️ Edit </button>
 			</div>
+			<button type="button" class="btn preset-outlined-surface-500" onclick={onClose}>
+				✕ Close
+			</button>
 		{/if}
 	</div>
 
@@ -217,7 +216,7 @@
 
 	<!-- Images -->
 	{#if editMode}
-		<div class="mb-4 mt-4 flex flex-wrap items-center gap-2">
+		<div class="mb-4 flex flex-wrap items-center gap-2">
 			{#each images as media}
 				<div class="group relative">
 					<img src={media.url} alt="media" class="h-20 w-20 rounded object-cover" />
@@ -240,18 +239,17 @@
 		</div>
 	{:else if images.length > 0}
 		<div
-			class="mb-4 mt-4 grid gap-2"
+			class="mb-4 grid gap-2"
 			style="grid-template-columns: repeat(auto-fill, minmax(100px, 1fr))"
 		>
 			{#each images as media, i}
-				<img
-					src={media.url}
-					alt="media"
-					class="aspect-square w-full cursor-pointer rounded object-cover"
-					onclick={() => (lightboxIndex = i)}
-					role="button"
-					tabindex="0"
-				/>
+				<button type="button" class="m-0 p-0" onclick={() => (lightboxIndex = i)}>
+					<img
+						src={media.url}
+						alt="media"
+						class="aspect-square w-full cursor-pointer rounded object-cover"
+					/>
+				</button>
 			{/each}
 		</div>
 	{/if}
@@ -259,12 +257,25 @@
 	<!-- Body -->
 	{#if editMode}
 		<textarea
-			class="textarea min-h-48 w-full text-sm leading-relaxed flex-1 resize-none"
+			id={textareaId}
+			class="textarea min-h-48 w-full flex-1 resize-none text-sm leading-relaxed"
 			placeholder="Write something..."
 			bind:value={editBody}
 		></textarea>
 	{:else}
-		<div class="text-sm leading-relaxed whitespace-pre-wrap flex-1 min-h-0 overflow-auto">{note.body}</div>
+		<div class="min-h-0 flex-1 overflow-auto text-sm leading-relaxed whitespace-pre-wrap">
+			{note.body}
+		</div>
+	{/if}
+
+	{#if editMode}
+		<button
+			class="mt-2 ml-auto btn preset-filled-error-500 btn-sm"
+			onclick={deleteNote}
+			disabled={deleting}
+		>
+			{deleting ? '...' : '🗑️ Delete this entry'}
+		</button>
 	{/if}
 </div>
 

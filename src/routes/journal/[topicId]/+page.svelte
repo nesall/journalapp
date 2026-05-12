@@ -3,8 +3,9 @@
 	import NoteBox from '$lib/widgets/NoteBox.svelte';
 	import { invalidateAll } from '$app/navigation';
 	import type { PageProps } from './$types';
-	import { enhance } from '$app/forms';
+	import { applyAction, deserialize, enhance } from '$app/forms';
 	import { searchState } from '$lib/sharedState.svelte';
+	import type { ActionResult } from '@sveltejs/kit';
 
 	let { data, form }: PageProps = $props();
 
@@ -12,13 +13,14 @@
 
 	onMount(async () => {});
 
-  function handleMutate() {
-		invalidateAll();
+	async function handleMutate() {
+		// console.log('Mutate called, invalidating all');
+		await invalidateAll();
 		newEntryId = null;
 	}
 
 	$effect(() => {
-		newEntryId = form?.newEntryId ?? null;
+		// console.log('Form updated, newEntryId:', newEntryId, { data, form });
 	});
 
 	$effect(() => {
@@ -51,10 +53,11 @@
 				return async ({ update }) => {
 					await update();
 					await invalidateAll();
+					newEntryId = form?.newEntryId ?? null;
 				};
 			}}
 		>
-			<button type="submit" class="btn preset-filled-primary-500">&#x2B;</button>
+			<button type="submit" class="btn preset-filled-primary-500" title="Add Entry"> + </button>
 		</form>
 	</div>
 

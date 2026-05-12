@@ -10,6 +10,7 @@ export interface NoteMedia {
   id: string;
   type: string;   // 'image' | 'video' | 'file'
   url: string;
+  thumbnail_url: string | null;
 }
 
 export interface Note {
