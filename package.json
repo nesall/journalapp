@@ -11,7 +11,8 @@
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"lint": "prettier --check .",
-		"format": "prettier --write ."
+		"format": "prettier --write .",
+		"import-journal": "tsx scripts/import-journal.ts C:/Users/arman/Downloads/journal_export ceebec2d-19a4-4788-8448-32d65f075899 782681c7-2043-4dd4-ac80-e3483ee3e4d6"
 	},
 	"devDependencies": {
 		"@fontsource/fira-mono": "^5.2.7",
@@ -25,6 +26,7 @@
 		"@tailwindcss/typography": "^0.5.19",
 		"@tailwindcss/vite": "^4.2.2",
 		"@types/bcrypt": "^6.0.0",
+		"@types/heic-convert": "^2.1.0",
 		"@types/jsdom": "^28.0.3",
 		"@types/sharp": "^0.31.1",
 		"jsdom": "^29.1.1",
@@ -43,6 +45,7 @@
 		"@lucide/svelte": "^1.3.0",
 		"bcrypt": "^6.0.0",
 		"dotenv": "^17.4.2",
+		"heic-convert": "^2.1.0",
 		"postgres": "^3.4.9",
 		"resend": "^6.12.3",
 		"sharp": "^0.34.5"
