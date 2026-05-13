@@ -60,7 +60,7 @@
 		{/if}
 	</div>
 {:else}
-	<div class="grid grid-cols-2 gap-4 p-4 sm:grid-cols-3 md:grid-cols-4">
+	<div class="grid grid-cols-2 gap-4 p-4 sm:grid-cols-3 md:grid-cols-4 container card mx-auto lg:max-w-2xl shadow">
 		{#each data.topics as topic}
 			<div
 				class="relative flex flex-col gap-2 card p-4 shadow transition-colors

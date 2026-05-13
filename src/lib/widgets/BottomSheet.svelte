@@ -62,7 +62,7 @@
 	<!-- Sheet -->
 	<div
 		bind:this={sheetEl}
-		class="fixed inset-x-0 bottom-0 z-50 m-0 flex h-[90dvh] max-h-[98dvh] flex-col rounded-t-2xl bg-surface-100-900 shadow-xl"
+		class="fixed inset-x-0 bottom-0 z-50 m-0 mx-auto flex h-[90dvh] max-h-[98dvh] flex-col rounded-t-2xl bg-surface-100-900 shadow-xl lg:max-w-2xl"
 		style="transform: translateY({dragY}px); transition: {dragging
 			? 'none'
 			: 'transform 0.3s ease'};"

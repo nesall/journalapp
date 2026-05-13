@@ -33,7 +33,7 @@
 </script>
 
 <div
-	class="bg-surface-200-700-token container mx-auto flex flex-col space-y-6 overflow-y-auto card p-6 shadow lg:max-w-2xl"
+	class="container mx-auto flex flex-col space-y-6 overflow-y-auto card p-6 shadow lg:max-w-2xl"
 >
 	<div class="mb-4 flex items-center justify-between gap-2">
 		<a
