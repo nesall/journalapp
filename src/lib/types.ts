@@ -34,5 +34,6 @@ export interface Topic {
   name: string;
   icon: string | null;
   color: string | null;
-  created_at: string;  
+  created_at: string;
+  entry_count: number;
 }

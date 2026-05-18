@@ -3,12 +3,15 @@
 	import SearchPanel from '$lib/widgets/SearchPanel.svelte';
 	import { page } from '$app/state';
 	import { slide } from 'svelte/transition';
+	import IconLogout from '@lucide/svelte/icons/log-out';
 
 	let { data, children }: { data: LayoutData; children: any } = $props();
 
 	let searchOpen = $state(!!page.url.searchParams.get('q'));
 	const isInTopic = $derived(page.url.pathname.split('/').length > 2);
-	const placeholder = $derived(isInTopic ? 'Search or tag:name...' : 'Search topics and entries...');
+	const placeholder = $derived(
+		isInTopic ? 'Search or tag:name...' : 'Search topics and entries...'
+	);
 </script>
 
 <div class="flex h-screen flex-col">
@@ -17,7 +20,7 @@
 			<h1 class="shrink-0 h3 font-bold">Journal</h1>
 
 			<!-- Desktop: always visible -->
-			<div class="relative hidden md:block flex-1 max-w-sm">
+			<div class="relative hidden max-w-sm flex-1 md:block">
 				<SearchPanel {placeholder} />
 			</div>
 
@@ -25,15 +28,18 @@
 				<!-- Mobile: toggle button -->
 				<button
 					type="button"
-					class="btn md:hidden {searchOpen ? 'preset-filled-primary-500' : 'preset-outlined-primary-200-800'}"
-					onclick={() => searchOpen = !searchOpen}
-				>🔍</button>
+					class="btn md:hidden {searchOpen
+						? 'preset-filled-primary-500'
+						: 'preset-outlined-primary-200-800'}"
+					onclick={() => (searchOpen = !searchOpen)}>🔍</button
+				>
 				<span class="hidden text-sm text-surface-700-300 sm:block">
 					{data.user.display_name ?? data.user.email}
 				</span>
+				<a href="/settings" class="btn preset-outlined-primary-200-800">⚙️</a>
 				<form method="POST" action="/logout">
 					<button type="submit" class="btn flex items-center gap-1 md:preset-tonal">
-						<span class="text-lg">&#x21A6;</span>
+						<span class="text-lg"><IconLogout /></span>
 						<span class="hidden md:inline-block">Logout</span>
 					</button>
 				</form>

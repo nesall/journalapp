@@ -56,10 +56,10 @@
 	}
 
 	async function saveEdit() {
-		if (!editBody.trim()) {
-			await deleteNote();
-			return;
-		}
+		// if (!editBody.trim()) {
+		// 	await deleteNote();
+		// 	return;
+		// }
 
 		saving = true;
 		try {

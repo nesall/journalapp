@@ -3,24 +3,33 @@
 	import NoteBox from '$lib/widgets/NoteBox.svelte';
 	import { invalidateAll } from '$app/navigation';
 	import type { PageProps } from './$types';
-	import { applyAction, deserialize, enhance } from '$app/forms';
+	import { enhance } from '$app/forms';
 	import { searchState } from '$lib/sharedState.svelte';
-	import type { ActionResult } from '@sveltejs/kit';
 
 	let { data, form }: PageProps = $props();
 
 	let newEntryId = $state<string | null>(null);
 
+	const PAGE_SIZE = 25;
+	let visibleCount = $state(PAGE_SIZE);
+
+	const visibleEntries = $derived(data.entries.slice(0, visibleCount));
+	const hasMore = $derived(visibleCount < data.entries.length);
+
 	onMount(async () => {});
 
+	function loadMore() {
+		visibleCount += PAGE_SIZE;
+	}
+
 	async function handleMutate() {
-		// console.log('Mutate called, invalidating all');
 		await invalidateAll();
 		newEntryId = null;
 	}
 
 	$effect(() => {
-		// console.log('Form updated, newEntryId:', newEntryId, { data, form });
+		data.entries;
+		visibleCount = PAGE_SIZE;
 	});
 
 	$effect(() => {
@@ -32,9 +41,7 @@
 	});
 </script>
 
-<div
-	class="container mx-auto flex flex-col space-y-6 overflow-y-auto card p-6 shadow lg:max-w-2xl"
->
+<div class="container mx-auto flex flex-col space-y-6 overflow-y-auto card p-6 shadow lg:max-w-2xl">
 	<div class="mb-4 flex items-center justify-between gap-2">
 		<a
 			href="/journal{data.q ? '?q=' + encodeURIComponent(data.q) : ''}"
@@ -62,7 +69,7 @@
 	</div>
 
 	<div class="flex flex-col space-y-4">
-		{#each data.entries as note}
+		{#each visibleEntries as note}
 			<NoteBox
 				{note}
 				tags={data.tags}
@@ -77,6 +84,18 @@
 		<div class="text-center text-surface-500">
 			<p>No entries yet.</p>
 		</div>
+	{/if}
+
+	{#if hasMore}
+		<div class="flex justify-center py-6">
+			<button type="button" class="btn preset-outlined-surface-500" onclick={loadMore}>
+				Load more ({visibleCount} of {data.entries.length})
+			</button>
+		</div>
+	{:else if data.entries.length > PAGE_SIZE}
+		<p class="py-6 text-center text-xs text-surface-400">
+			All {data.entries.length} entries loaded
+		</p>
 	{/if}
 </div>
 

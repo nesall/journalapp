@@ -3,6 +3,7 @@
 	import { enhance } from '$app/forms';
 	import type { Topic } from '$lib/types';
 	import { searchState } from '$lib/sharedState.svelte';
+	import { pluralEnding } from '$lib/utils';
 
 	let { data }: { data: PageData } = $props();
 
@@ -60,7 +61,9 @@
 		{/if}
 	</div>
 {:else}
-	<div class="grid grid-cols-2 gap-4 p-4 sm:grid-cols-3 md:grid-cols-4 container card mx-auto lg:max-w-2xl shadow">
+	<div
+		class="container mx-auto grid grid-cols-2 gap-4 card p-4 shadow sm:grid-cols-3 md:grid-cols-4 lg:max-w-2xl"
+	>
 		{#each data.topics as topic}
 			<div
 				class="relative flex flex-col gap-2 card p-4 shadow transition-colors
@@ -114,6 +117,10 @@
 					>
 						<span class="text-4xl">{topic.icon ?? '📓'}</span>
 						<span class="text-center font-medium">{topic.name}</span>
+						<span class="preset-filled-surface-300 badge text-xs">
+							{topic.entry_count}
+							{pluralEnding(Number(topic.entry_count), 'entry')}
+						</span>
 					</a>
 
 					{#if activeTopicId === topic.id}

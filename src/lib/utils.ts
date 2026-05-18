@@ -54,6 +54,12 @@ function parseSearchQuery(q: string): { text: string; tag: string | null } {
   return { text, tag };
 }
 
+function pluralEnding(count: number, singular: string) {
+  if (count === 1) return singular;
+  if (singular.endsWith('y')) return singular.slice(0, -1) + 'ies';
+  return singular + 's';
+}
+
 export {
   nextRandomId,
   isPtInRect,
@@ -62,5 +68,6 @@ export {
   formatDate,
   formatTime,
   formatDateYYYYMMDD,
-  parseSearchQuery
+  parseSearchQuery,
+  pluralEnding
 }

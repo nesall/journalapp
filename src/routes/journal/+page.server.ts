@@ -11,29 +11,33 @@ export const load: PageServerLoad = async ({ locals, url }) => {
     const { text, tag } = parseSearchQuery(q);
     const topics = (text || tag)
         ? await sql<Topic[]>`
-        SELECT DISTINCT t.id, t.name, t.icon, t.color, t.created_at
+        SELECT t.id, t.name, t.icon, t.color, t.created_at, COUNT(e.id) AS entry_count
         FROM topics t
+        LEFT JOIN entries e ON e.topic_id = t.id
         WHERE t.user_id = ${locals.user!.id}
         AND (
             ${text ? sql`t.name ILIKE ${'%' + text + '%'} OR` : sql``}
             EXISTS (
-                SELECT 1 FROM entries e
-                LEFT JOIN topic_tags tt ON tt.id = e.tag_id
-                WHERE e.topic_id = t.id
-                AND e.user_id = ${locals.user!.id}
+                SELECT 1 FROM entries e2
+                LEFT JOIN topic_tags tt ON tt.id = e2.tag_id
+                WHERE e2.topic_id = t.id
+                AND e2.user_id = ${locals.user!.id}
                 AND (
-                    ${text ? sql`(e.title ILIKE ${'%' + text + '%'} OR e.body ILIKE ${'%' + text + '%'})` : sql`TRUE`}
+                    ${text ? sql`(e2.title ILIKE ${'%' + text + '%'} OR e2.body ILIKE ${'%' + text + '%'})` : sql`TRUE`}
                     ${tag ? sql`AND tt.name ILIKE ${'%' + tag + '%'}` : sql``}
                 )
             )
         )
+        GROUP BY t.id
         ORDER BY t.created_at ASC
     `
         : await sql<Topic[]>`
-        SELECT id, name, icon, color, created_at
-        FROM topics
-        WHERE user_id = ${locals.user!.id}
-        ORDER BY created_at ASC
+        SELECT t.id, t.name, t.icon, t.color, t.created_at, COUNT(e.id) AS entry_count
+        FROM topics t
+        LEFT JOIN entries e ON e.topic_id = t.id
+        WHERE t.user_id = ${locals.user!.id}
+        GROUP BY t.id
+        ORDER BY t.created_at ASC
     `;
 
     return { topics, q };

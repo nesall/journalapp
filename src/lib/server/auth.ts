@@ -1,6 +1,7 @@
 import bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
 import sql from '$lib/db';
+import { SESSION_TIMEOUT_MINUTES } from '$env/static/private';
 
 const SALT_ROUNDS = 12;
 const SESSION_TTL_DAYS = 30;
@@ -15,12 +16,13 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
 
 export async function createSession(userId: string): Promise<string> {
   const sessionId = randomBytes(32).toString('hex');
+  const minutes = parseInt(SESSION_TIMEOUT_MINUTES ?? '30');
   await sql`
     INSERT INTO sessions (id, user_id, expires_at)
     VALUES (
-      ${sessionId},
-      ${userId},
-      NOW() + ${SESSION_TTL_DAYS} * INTERVAL '1 day'
+        ${sessionId},
+        ${userId},
+        NOW() + INTERVAL '1 minute' * ${minutes}
     )`;
   return sessionId;
 }

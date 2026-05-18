@@ -1,5 +1,6 @@
 import type { Handle } from '@sveltejs/kit';
 import sql from '$lib/db';
+import { SESSION_TIMEOUT_MINUTES } from '$env/static/private';
 
 export const handle: Handle = async ({ event, resolve }) => {
 	const sessionId = event.cookies.get('session_id');
@@ -12,7 +13,19 @@ export const handle: Handle = async ({ event, resolve }) => {
 			WHERE s.id = ${sessionId}
 			AND s.expires_at > NOW()
 		`;
-		event.locals.user = rows[0] ?? null;
+
+		if (0 < rows.length) {
+			event.locals.user = rows[0];
+			// slide the expiry window on each request
+			const minutes = parseInt(SESSION_TIMEOUT_MINUTES ?? '30');
+			await sql`
+				UPDATE sessions SET expires_at = NOW() + INTERVAL '1 minute' * ${minutes}
+				WHERE id = ${sessionId}
+				`;
+		} else {
+			event.locals.user = null;
+			event.cookies.delete('session_id', { path: '/' });
+		}
 	} else {
 		event.locals.user = null;
 	}
