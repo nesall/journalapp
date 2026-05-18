@@ -116,12 +116,11 @@
 	<div class="space-y-3 card bg-surface-100-900 p-6">
 		<h3 class="font-semibold">Tools</h3>
 		<div class="flex flex-col gap-2">
-			<a href="/settings/stats" class="btn justify-start preset-outlined-surface-500"> 📊 Stats →</a>
+			<a href="/settings/stats" class="btn justify-start preset-outlined-surface-500">
+				📊 Stats →
+			</a>
 			<a href="/settings/export" class="btn justify-start preset-outlined-surface-500">
 				📦 Export →
-			</a>
-			<a href="/settings/pdf" class="btn justify-start preset-outlined-surface-500">
-				📄 PDF Journal →
 			</a>
 		</div>
 	</div>
