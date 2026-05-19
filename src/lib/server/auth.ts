@@ -30,3 +30,15 @@ export async function createSession(userId: string): Promise<string> {
 export async function deleteSession(sessionId: string): Promise<void> {
   await sql`DELETE FROM sessions WHERE id = ${sessionId}`;
 }
+
+export async function getNonExpiredSession(sessionId: string)
+  : Promise<{ id: string; email: string; display_name: string | null, expires_at: string } | null> {
+  const rows = await sql<{ id: string; email: string; display_name: string | null, expires_at: string }[]>`
+			SELECT u.id, u.email, u.display_name, s.expires_at
+			FROM sessions s
+			JOIN users u ON u.id = s.user_id
+			WHERE s.id = ${sessionId}
+			AND s.expires_at > NOW()
+		`;
+  return 0 < rows.length ? rows[0] : null;
+}

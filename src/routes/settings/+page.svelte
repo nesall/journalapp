@@ -1,8 +1,8 @@
 <script lang="ts">
 	import type { PageData, ActionData } from './$types';
 	import { enhance } from '$app/forms';
-	import { fade, fly, slide } from 'svelte/transition';
 	import { tick } from 'svelte';
+	import ThemeSettings from '$lib/widgets/ThemeSettings.svelte';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 
@@ -111,6 +111,8 @@
 			</fieldset>
 		</form>
 	</div>
+
+	<ThemeSettings />
 
 	<!-- Tools section -->
 	<div class="space-y-3 card bg-surface-100-900 p-6">
