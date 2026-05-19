@@ -49,7 +49,7 @@
 
 	<!-- Mobile: collapsible search -->
 	{#if searchOpen}
-		<div class="border-b border-surface-300" transition:slide={{ duration: 200 }}>
+		<div class="border-b border-surface-300-700" transition:slide={{ duration: 200 }}>
 			<SearchPanel {placeholder} inline />
 		</div>
 	{/if}

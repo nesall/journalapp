@@ -115,7 +115,7 @@
 				{#if input}
 					<button
 						type="button"
-						class="text-xs text-surface-400 hover:text-surface-600"
+						class="text-xs text-surface-400-600 hover:text-surface-600-800"
 						onclick={clear}>✕</button
 					>
 				{/if}
@@ -127,12 +127,12 @@
 	<!-- Dropdown -->
 	{#if focused && (suggestions.length > 0 || isNew)}
 		<div
-			class="absolute top-full left-8 z-10 mt-1 w-48 rounded-lg border border-surface-300 bg-surface-50 shadow-lg"
+			class="absolute top-full left-8 z-10 mt-1 w-48 rounded-lg border border-surface-300-700 bg-surface-50 shadow-lg"
 		>
 			{#each suggestions as tag}
 				<button
 					type="button"
-					class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-surface-200"
+					class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-surface-200-800"
 					onmousedown={() => select(tag)}
 				>
 					<span class="h-3 w-3 shrink-0 rounded-full" style="background-color: {tag.color}"></span>
@@ -142,14 +142,14 @@
 
 			<!-- Create new -->
 			{#if isNew}
-				<div class="space-y-2 border-t border-surface-300 p-2">
+				<div class="space-y-2 border-t border-surface-300-700 p-2">
 					<p class="text-xs text-surface-500">Create <strong>"{input.trim()}"</strong></p>
 					<div class="flex flex-wrap gap-1">
 						{#each colors as color}
 							<button
 								type="button"
 								class="h-5 w-5 rounded-full transition-transform {selectedColor === color
-									? 'scale-125 ring-2 ring-surface-400'
+									? 'scale-125 ring-2 ring-surface-400-600'
 									: ''}"
 								style="background-color: {color}"
 								aria-label="Select {color} as tag color"

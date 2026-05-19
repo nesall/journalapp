@@ -6,7 +6,7 @@ import storage from '$lib/server/storage';
 export const PATCH: RequestHandler = async ({ request, locals }) => {
   if (!locals.user) error(401);
   const { id, title, body, mood, entry_date, tag_id, tag_name, tag_color, topic_id } = await request.json();
-  if (!body?.trim()) error(400, 'Body required');
+  // if (!body?.trim()) error(400, 'Body required');
 
   let resolvedTagId = tag_id ?? null;
 

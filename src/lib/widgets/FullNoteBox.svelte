@@ -148,7 +148,56 @@
 	$effect(() => {
 		if (autoEdit) enterEdit();
 	});
+
+	async function uploadImageFile(file: File) {
+		const formData = new FormData();
+		formData.append('file', file);
+		formData.append('entry_id', note.id);
+
+		const res = await fetch(`/journal/${topicId}/media`, {
+			method: 'POST',
+			body: formData
+		});
+		if (res.ok) onMutate?.();
+		else console.error('Image upload failed', await res.text());
+	}
+
+	async function handlePaste() {
+		try {
+			const items = await navigator.clipboard.read();
+			for (const item of items) {
+				const imageType = item.types.find((t) => t.startsWith('image/'));
+				if (!imageType) continue;
+
+				const blob = await item.getType(imageType);
+				const file = new File([blob], 'paste.png', { type: imageType });
+
+				await uploadImageFile(file);
+				return; // only handle first image
+			}
+			alert('No image found in clipboard');
+		} catch (err) {
+			// fallback — listen for paste event on the document
+			console.warn('Clipboard API failed, try Ctrl+V instead:', err);
+			alert('Could not read clipboard. Try Ctrl+V while focused on the note.');
+		}
+	}
+
+	async function onGlobalPaste(e: ClipboardEvent) {
+		if (!editMode) return;
+		const items = Array.from(e.clipboardData?.items ?? []);
+		const imageItem = items.find((i) => i.type.startsWith('image/'));
+		if (!imageItem) return;
+
+		e.preventDefault();
+		const file = imageItem.getAsFile();
+		if (!file) return;
+
+		await uploadImageFile(file);
+	}
 </script>
+
+<svelte:window onpaste={onGlobalPaste} />
 
 <div class="flex h-full w-full flex-col px-4 pt-2 pb-4">
 	<!-- Top bar -->
@@ -228,14 +277,26 @@
 					>
 				</div>
 			{/each}
-			<label
-				class="flex h-20 w-20
-                          cursor-pointer items-center justify-center rounded border-2 border-dashed
-                          border-surface-400 text-3xl transition-colors hover:border-primary-500 hover:text-primary-500"
-			>
-				<input type="file" accept="image/*" class="hidden" onchange={handleImageUpload} />
-				+
-			</label>
+			<div class="flex items-center gap-2">
+				<label
+					class="flex h-20 w-20
+                  cursor-pointer items-center justify-center rounded border-2 border-dashed
+                  border-surface-400-600 text-3xl transition-colors hover:border-primary-500 hover:text-primary-500"
+				>
+					<input type="file" accept="image/*" class="hidden" onchange={handleImageUpload} />
+					📎
+				</label>
+				<button
+					type="button"
+					class="flex h-20 w-20
+               items-center justify-center rounded border-2 border-dashed
+               border-surface-400-600 text-3xl transition-colors hover:border-primary-500 hover:text-primary-500"
+					onclick={handlePaste}
+					title="Paste image from clipboard"
+				>
+					📋
+				</button>
+			</div>
 		</div>
 	{:else if images.length > 0}
 		<div

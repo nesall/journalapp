@@ -41,12 +41,12 @@
 </script>
 
 <div class="relative flex items-center">
-	<span class="absolute left-3 text-surface-400">🔍</span>
+	<span class="absolute left-3 text-surface-400-600">🔍</span>
 	<input type="text" class="input pr-8 pl-9" {placeholder} bind:value={q} oninput={onInput} />
 	{#if q}
 		<button
 			type="button"
-			class="absolute right-3 text-surface-400 hover:text-surface-600"
+			class="absolute right-3 text-surface-400-600 hover:text-surface-600-400"
 			onclick={clear}>✕</button
 		>
 	{/if}

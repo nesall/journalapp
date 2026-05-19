@@ -77,7 +77,7 @@
 </script>
 
 <div
-	class="flex h-full flex-col space-y-2 card border-surface-300 px-4 py-2
+	class="flex h-full flex-col space-y-2 card border-surface-300-700 px-4 py-2
      shadow-lg outline-none focus:border-primary-500"
 	onblur={(e) => {
 		if (!e.currentTarget.contains(e.relatedTarget as Node)) interactiveMode = false;
