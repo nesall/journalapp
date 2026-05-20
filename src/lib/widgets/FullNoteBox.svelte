@@ -4,6 +4,8 @@
 	import { tick } from 'svelte';
 	import Lightbox from './Lightbox.svelte';
 	import TagPicker from './TagPicker.svelte';
+	import { dndzone } from 'svelte-dnd-action';
+	import { flip } from 'svelte/animate';
 
 	interface Props {
 		note: Note;
@@ -27,12 +29,14 @@
 	let editTagId = $state<string | null>(note.tag_id ?? null);
 	let editTagName = $state<string | null>(null);
 	let editTagColor = $state<string | null>(null);
+	let editableMedia = $state([...note.media].map((m, i) => ({ ...m, sort_order: i })));
 
 	let lightboxIndex = $state<number | null>(null);
 
 	const images = $derived(note.media ?? []);
 
 	const textareaId = 'fullnote-textarea-' + nextRandomId(8);
+	const flipDurationMs = 150;
 
 	function enterEdit() {
 		editTitle = note.title ?? '';
@@ -79,6 +83,7 @@
 				})
 			});
 			if (!res.ok) throw new Error(await res.text());
+			await saveMediaOrder();
 			onMutate?.();
 			editMode = false;
 		} catch (err) {
@@ -141,10 +146,6 @@
 		editTagColor = tagColor;
 	}
 
-	// $effect(() => {
-	// 	if (bodyEl && !editMode) bodyEl.innerText = note.body;
-	// 	if (titleEl && !editMode) titleEl.innerText = note.title ?? '';
-	// });
 	$effect(() => {
 		if (autoEdit) enterEdit();
 	});
@@ -194,6 +195,29 @@
 		if (!file) return;
 
 		await uploadImageFile(file);
+	}
+
+	$effect(() => {
+		editableMedia = [...note.media].map((m, i) => ({ ...m, sort_order: i }));
+	});
+
+	function handleDndConsider(e: CustomEvent) {
+		editableMedia = e.detail.items;
+	}
+
+	async function handleDndFinalize(e: CustomEvent) {
+		editableMedia = e.detail.items;
+		// await saveMediaOrder();
+	}
+
+	async function saveMediaOrder() {
+		const order = editableMedia.map((m, i) => ({ id: m.id, sort_order: i }));
+		await fetch(`/journal/${topicId}/media/order`, {
+			method: 'PATCH',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ order })
+		});
+		onMutate?.();
 	}
 </script>
 
@@ -266,22 +290,33 @@
 	<!-- Images -->
 	{#if editMode}
 		<div class="mb-4 flex flex-wrap items-center gap-2">
-			{#each images as media}
-				<div class="group relative">
-					<img src={media.url} alt="media" class="h-20 w-20 rounded object-cover" />
-					<button
-						type="button"
-						class="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full
+			<div
+				class="flex flex-wrap items-center gap-2"
+				use:dndzone={{ items: editableMedia, flipDurationMs }}
+				onconsider={handleDndConsider}
+				onfinalize={handleDndFinalize}
+			>
+				{#each editableMedia as media (media.id)}
+					<div class="group relative" animate:flip={{ duration: flipDurationMs }}>
+						<img
+							src={media.url}
+							alt="media"
+							class="pointer-events-none h-20 w-20 rounded object-cover"
+						/>
+						<button
+							type="button"
+							class="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full
                                bg-error-500 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100"
-						onclick={() => removeImage(media.id)}>✕</button
-					>
-				</div>
-			{/each}
+							onclick={() => removeImage(media.id)}>✕</button
+						>
+					</div>
+				{/each}
+			</div>
 			<div class="flex items-center gap-2">
 				<label
 					class="flex h-20 w-20
-                  cursor-pointer items-center justify-center rounded border-2 border-dashed
-                  border-surface-400-600 text-3xl transition-colors hover:border-primary-500 hover:text-primary-500"
+								cursor-pointer items-center justify-center rounded border-2 border-dashed
+								border-surface-400-600 text-3xl transition-colors hover:border-primary-500 hover:text-primary-500"
 				>
 					<input type="file" accept="image/*" class="hidden" onchange={handleImageUpload} />
 					📎

@@ -38,6 +38,7 @@ export const load: PageServerLoad = async ({ locals, params, url }) => {
         COALESCE(
             JSON_AGG(
                 JSON_BUILD_OBJECT('id', m.id, 'type', m.type, 'url', m.url, 'thumbnail_url', m.thumbnail_url)
+                ORDER BY m.sort_order ASC
             ) FILTER (WHERE m.id IS NOT NULL),
             '[]'
         ) AS media
