@@ -359,8 +359,18 @@
 			bind:value={editBody}
 		></textarea>
 	{:else}
-		<div class="min-h-0 flex-1 overflow-auto text-sm leading-relaxed whitespace-pre-wrap">
-			{note.body}
+		<hr class="my-2 hr" />
+		<div class="relative min-h-0 flex-1 overflow-auto text-sm leading-relaxed whitespace-pre-wrap">
+			<button
+				type="button"
+				class="sticky top-2 float-right btn h-8 w-8 preset-outlined-surface-300-700"
+				title="Copy note content"
+				onclick={() => navigator.clipboard.writeText(note.body)}
+			>
+				📋
+			</button>
+
+			{note.body}<!-- if too long a scrollbar will be shown-->
 		</div>
 	{/if}
 

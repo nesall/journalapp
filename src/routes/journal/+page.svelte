@@ -117,7 +117,7 @@
 					>
 						<span class="text-4xl">{topic.icon ?? '📓'}</span>
 						<span class="text-center font-medium">{topic.name}</span>
-						<span class="preset-filled-surface-300-700 badge text-xs">
+						<span class="badge text-xs">
 							{topic.entry_count}
 							{pluralEnding(Number(topic.entry_count), 'entry')}
 						</span>
