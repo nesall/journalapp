@@ -368,9 +368,7 @@
 				onclick={() => navigator.clipboard.writeText(note.body)}
 			>
 				📋
-			</button>
-
-			{note.body}<!-- if too long a scrollbar will be shown-->
+			</button>{note.body}<!-- if too long a scrollbar will be shown-->
 		</div>
 	{/if}
 

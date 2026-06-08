@@ -150,4 +150,32 @@
 			</div>
 		</div>
 	{/if}
+
+	{#if data.tagDist.length > 0}
+		<div class="space-y-3 card bg-surface-100 p-4">
+			<h3 class="font-semibold">Tags distribution</h3>
+			<div class="space-y-2">
+				{#each data.tagDist as tag}
+					{@const max = data.tagDist[0].count}
+					<div class="flex items-center gap-3">
+						<span
+							class="shrink-0 rounded-full px-2 py-0.5 text-xs text-white"
+							style="background-color: {tag.color}">{tag.name}</span
+						>
+						<div class="flex-1">
+							<div class="h-2 rounded-full bg-surface-300">
+								<div
+									class="h-2 rounded-full"
+									style="width: {max > 0
+										? (tag.count / max) * 100
+										: 0}%; background-color: {tag.color}"
+								></div>
+							</div>
+						</div>
+						<span class="shrink-0 text-xs text-surface-500">{tag.count}</span>
+					</div>
+				{/each}
+			</div>
+		</div>
+	{/if}
 </div>

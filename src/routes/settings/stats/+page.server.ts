@@ -48,6 +48,16 @@ export const load: PageServerLoad = async ({ locals }) => {
         ORDER BY mood ASC
     `;
 
+  const tagDist = await sql`
+    SELECT tt.name, tt.color, COUNT(e.id) AS count
+    FROM topic_tags tt
+    LEFT JOIN entries e ON e.tag_id = tt.id
+    JOIN topics t ON t.id = tt.topic_id
+    WHERE t.user_id = ${userId}
+    GROUP BY tt.id
+    ORDER BY count DESC
+`;
+
   // avg words per entry
   const avgWords = await sql`
         SELECT ROUND(AVG(LENGTH(body) - LENGTH(REPLACE(body, ' ', '')) + 1)) AS avg_words
@@ -61,6 +71,7 @@ export const load: PageServerLoad = async ({ locals }) => {
     entriesPerMonth,
     topicActivity,
     moodDist,
+    tagDist,
     avgWords: avgWords[0]?.avg_words ?? 0
   };
 };
