@@ -23,8 +23,10 @@
 	}
 
 	async function handleMutate() {
+		const previousCount = visibleCount;
 		await invalidateAll();
 		newEntryId = null;
+		visibleCount = Math.min(previousCount, data.entries.length);
 	}
 
 	$effect(() => {
