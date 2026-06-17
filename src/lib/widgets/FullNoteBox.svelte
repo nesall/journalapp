@@ -48,7 +48,7 @@
 		editTagColor = null;
 		editMode = true;
 		tick().then(() => {
-			document.getElementById(textareaId)?.focus();
+			// document.getElementById(textareaId)?.focus();
 		});
 	}
 
