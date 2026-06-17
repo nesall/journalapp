@@ -95,7 +95,7 @@
 	<hr class="hr" />
 	{#if images.length > 0}
 		<div class="gallery {gridClass}">
-			{#each images as media, j}
+			{#each images.slice(0, 6) as media, j}
 				{#if j < 10}
 					<button type="button" onclick={() => (lightboxIndex = j)}>
 						<img src={media.url} alt="Note media" class="cursor-pointer" />

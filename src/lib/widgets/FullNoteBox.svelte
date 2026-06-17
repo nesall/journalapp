@@ -291,8 +291,13 @@
 	{#if editMode}
 		<div class="mb-4 flex flex-wrap items-center gap-2">
 			<div
-				class="flex flex-wrap items-center gap-2"
-				use:dndzone={{ items: editableMedia, flipDurationMs }}
+				class="flex items-center gap-2 overflow-auto py-4"
+				use:dndzone={{
+					items: editableMedia,
+					flipDurationMs,
+					dragDisabled: editableMedia.length === 0,
+					delayTouchStart: 150
+				}}
 				onconsider={handleDndConsider}
 				onfinalize={handleDndFinalize}
 			>
@@ -301,12 +306,19 @@
 						<img
 							src={media.url}
 							alt="media"
-							class="pointer-events-none h-20 w-20 rounded object-cover"
+							class="pointer-events-none h-24 w-20 min-w-16 rounded object-cover"
 						/>
+						<!-- <div
+							data-dnd-handle
+							class="absolute right-0 bottom-0 left-0 flex cursor-grab items-center
+                       justify-center rounded-b bg-black/40 py-0.5 text-xs text-white"
+						>
+							⠿
+						</div> -->
 						<button
 							type="button"
 							class="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full
-                               bg-error-500 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100"
+                               bg-error-500 text-xs text-white transition-opacity group-hover:opacity-100 lg:opacity-0"
 							onclick={() => removeImage(media.id)}>✕</button
 						>
 					</div>
@@ -334,16 +346,13 @@
 			</div>
 		</div>
 	{:else if images.length > 0}
-		<div
-			class="mb-4 grid gap-2"
-			style="grid-template-columns: repeat(auto-fill, minmax(100px, 1fr))"
-		>
+		<div class="mb-4 flex gap-2 overflow-x-auto">
 			{#each images as media, i}
 				<button type="button" class="m-0 p-0" onclick={() => (lightboxIndex = i)}>
 					<img
 						src={media.url}
 						alt="media"
-						class="aspect-square w-full cursor-pointer rounded object-cover"
+						class="aspect-square h-24 min-w-16 cursor-pointer rounded object-cover"
 					/>
 				</button>
 			{/each}
