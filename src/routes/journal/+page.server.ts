@@ -11,8 +11,8 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 
     const q = url.searchParams.get('q')?.trim() ?? '';
 
-    const { text, tag } = parseSearchQuery(q);
-    const topics = (text || tag)
+    const { text, tag, year } = parseSearchQuery(q);
+    const topics = (text || tag || year)
         ? await sql<Topic[]>`
         SELECT t.id, t.name, t.icon, t.color, t.created_at, COUNT(e.id) AS entry_count
         FROM topics t
@@ -28,6 +28,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
                 AND (
                     ${text ? sql`(e2.title ILIKE ${'%' + text + '%'} OR e2.body ILIKE ${'%' + text + '%'})` : sql`TRUE`}
                     ${tag ? sql`AND tt.name ILIKE ${'%' + tag + '%'}` : sql``}
+                    ${year ? sql`AND EXTRACT(YEAR FROM e2.entry_date) = ${parseInt(year)}` : sql``}
                 )
             )
         )

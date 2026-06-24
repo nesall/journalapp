@@ -24,7 +24,7 @@ export const load: PageServerLoad = async ({ locals, params, url }) => {
   ORDER BY created_at ASC
   `;
 
-  const { text, tag } = parseSearchQuery(q);
+  const { text, tag, year } = parseSearchQuery(q);
 
   const entries = await sql<Note[]>`
     SELECT
@@ -49,6 +49,7 @@ export const load: PageServerLoad = async ({ locals, params, url }) => {
     AND e.user_id = ${locals.user!.id}
     ${text ? sql`AND (e.title ILIKE ${'%' + text + '%'} OR e.body ILIKE ${'%' + text + '%'})` : sql``}
     ${tag ? sql`AND t.name ILIKE ${'%' + tag + '%'}` : sql``}
+    ${year ? sql`AND EXTRACT(YEAR FROM e.entry_date) = ${parseInt(year)}` : sql``}
     GROUP BY e.id, t.id
     ORDER BY e.entry_date DESC, e.created_at DESC
 `;

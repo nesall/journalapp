@@ -47,11 +47,18 @@ function formatDateYYYYMMDD(dateStr: string): string {
   return dateStr.split('T')[0];
 }
 
-function parseSearchQuery(q: string): { text: string; tag: string | null } {
+function parseSearchQuery(q: string): { text: string; tag: string | null; year: string | null } {
   const tagMatch = q.match(/tag:\s*(\S+)/i);
+  const yearMatch = q.match(/year:\s*(\d{4})/i);
+
   const tag = tagMatch ? tagMatch[1] : null;
-  const text = q.replace(/tag:\s*\S+/i, '').trim();
-  return { text, tag };
+  const year = yearMatch ? yearMatch[1] : null;
+  const text = q
+    .replace(/tag:\s*\S+/i, '')
+    .replace(/year:\s*\d{4}/i, '')
+    .trim();
+
+  return { text, tag, year };
 }
 
 function pluralEnding(count: number, singular: string) {

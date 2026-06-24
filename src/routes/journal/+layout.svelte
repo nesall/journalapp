@@ -10,7 +10,7 @@
 	let searchOpen = $state(!!page.url.searchParams.get('q'));
 	const isInTopic = $derived(page.url.pathname.split('/').length > 2);
 	const placeholder = $derived(
-		isInTopic ? 'Search or tag:name...' : 'Search topics and entries...'
+		isInTopic ? 'Search or tag:name year:2025...' : 'Search topics and entries...'
 	);
 </script>
 
