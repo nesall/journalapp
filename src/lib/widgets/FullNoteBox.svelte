@@ -6,6 +6,7 @@
 	import TagPicker from './TagPicker.svelte';
 	import { dndzone } from 'svelte-dnd-action';
 	import { flip } from 'svelte/animate';
+	import { toaster } from '$lib/sharedState.svelte';
 
 	interface Props {
 		note: Note;
@@ -326,7 +327,7 @@
 			</div>
 			<div class="flex items-center gap-2">
 				<label
-					class="flex h-20 w-20
+					class="flex h-16 w-16
 								cursor-pointer items-center justify-center rounded border-2 border-dashed
 								border-surface-400-600 text-3xl transition-colors hover:border-primary-500 hover:text-primary-500"
 				>
@@ -335,7 +336,7 @@
 				</label>
 				<button
 					type="button"
-					class="flex h-20 w-20
+					class="flex h-16 w-16
                items-center justify-center rounded border-2 border-dashed
                border-surface-400-600 text-3xl transition-colors hover:border-primary-500 hover:text-primary-500"
 					onclick={handlePaste}
@@ -374,7 +375,10 @@
 				type="button"
 				class="sticky top-2 float-right btn h-8 w-8 preset-outlined-surface-300-700"
 				title="Copy note content"
-				onclick={() => navigator.clipboard.writeText(note.body)}
+				onclick={() => {
+					navigator.clipboard.writeText(note.body);
+					toaster.info({ title: 'Copied', description: 'Note content copied to clipboard.' });
+				}}
 			>
 				📋
 			</button>{note.body}<!-- if too long a scrollbar will be shown-->
